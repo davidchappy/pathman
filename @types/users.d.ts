@@ -1,4 +1,4 @@
 declare type User = {
-  id: number,
-  fullName: string,
-};
+  id: number
+  fullName: string
+}

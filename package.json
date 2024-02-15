@@ -4,6 +4,9 @@
   "version": "0.0.1",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "format": "npx prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\""
+  },
   "workspaces": [
     "packages/*"
   ],
