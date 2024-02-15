@@ -1,0 +1,12 @@
+{
+    "private": true,
+    "name": "@project/components",
+    "version": "1.0.0",
+    "license": "SEE LICENSE IN ../../LICENSE",
+    "main": "src/index.ts",
+    "peerDependencies": {
+      "classnames": "*",
+      "react": "*",
+      "typescript": "*"
+    }
+  }
