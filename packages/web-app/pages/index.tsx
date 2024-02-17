@@ -1,6 +1,6 @@
 import React from "react"
-import { Header } from "@pacman/components"
+import Pacman from "@pacman/core"
 
 export default function Index() {
-  return <Header>Header goes here</Header>
+  return <Pacman />
 }
