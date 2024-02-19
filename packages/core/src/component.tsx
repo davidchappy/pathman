@@ -8,15 +8,15 @@ const PacmanComponent = () => {
     if (!canvasRef.current) return
 
     const canvas = canvasRef.current
-    const pacman = createPacman(canvas)
-    pacman.start()
+    const pathsman = createPacman(canvas)
+    pathsman.run()
 
     return () => {
-      pacman.stop()
+      pathsman.quit()
     }
   }, [canvasRef.current])
 
-  return <canvas id="pacman" ref={canvasRef} />
+  return <canvas id="pathsman" ref={canvasRef} />
 }
 
 export default PacmanComponent

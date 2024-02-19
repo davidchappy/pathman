@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@pacman/components", "@pacman/core"],
+  transpilePackages: ["@pathsman/components", "@pathsman/core"],
 }
 
 module.exports = nextConfig
