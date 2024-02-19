@@ -13,7 +13,10 @@ const config: GameConfig = {
     mouthSpeed: 0.1,
     maxLowestAngle: -0.6,
   },
-  ghostSpeed: 2,
+  ghosts: {
+    speed: 1,
+    size: 20,
+  },
   cellSize: 20,
   colors: {
     primary: "yellow",
@@ -24,7 +27,9 @@ const config: GameConfig = {
   },
   pellets: {
     size: 2,
-    count: 300,
+  },
+  powerPellets: {
+    size: 6,
   },
   sidebarWidth: 120,
   overlayMessages: {
@@ -36,15 +41,15 @@ const config: GameConfig = {
   wallWidth: 2,
 }
 
-const getInitialPacmanPosition = () => {
-  let pacmanPosition = {
+const getInitialPathsmanPosition = () => {
+  let pathsmanPosition = {
     x: config.pathsman.startX,
     y: config.pathsman.startY,
   }
   config.maze.cells.forEach((row, y) => {
     row.forEach((cell, x) => {
-      if (cell === CellType.PacmanStart) {
-        pacmanPosition = {
+      if (cell === CellType.PathsmanStart) {
+        pathsmanPosition = {
           x: x * config.cellSize + config.cellSize / 2,
           y: y * config.cellSize + config.cellSize / 2,
         }
@@ -52,24 +57,26 @@ const getInitialPacmanPosition = () => {
     })
   })
 
-  return pacmanPosition
+  return pathsmanPosition
 }
 
 const getInitialState = (): GameState => {
-  const pacmanPosition = getInitialPacmanPosition()
+  const pathsmanPosition = getInitialPathsmanPosition()
 
   return {
     scale: 1,
     pathsman: {
-      x: pacmanPosition.x,
-      y: pacmanPosition.y,
+      x: pathsmanPosition.x,
+      y: pathsmanPosition.y,
       direction: config.pathsman.startDirection,
       isMoving: false,
       mouthOpening: false,
       mouthAngle: 0,
     },
     previousAnimationTimestamp: undefined,
+    ghosts: [],
     pellets: [],
+    powerPellets: [],
     currentFPS: 0,
     clickLocation: undefined,
     phase: "playing",
@@ -97,6 +104,15 @@ const game = (canvas: HTMLCanvasElement) => {
     state.scale = scale
   }
 
+  const calculateMazeDimensions = (): { x: number; y: number } => {
+    const maze = config.maze.cells
+
+    const x = maze[0].length * config.cellSize
+    const y = maze.length * config.cellSize
+
+    return { x, y }
+  }
+
   const createPellets = () => {
     const maze = config.maze.cells
 
@@ -109,11 +125,41 @@ const game = (canvas: HTMLCanvasElement) => {
 
           state.pellets.push({ x: pelletX, y: pelletY })
         }
+
+        if (cell === CellType.PowerPellet) {
+          const pelletX = x * config.cellSize + config.cellSize / 2
+          const pelletY = y * config.cellSize + config.cellSize / 2
+
+          state.powerPellets.push({ x: pelletX, y: pelletY })
+        }
       }
     }
   }
 
   createPellets()
+
+  const createGhosts = () => {
+    const maze = config.maze.cells
+
+    for (let y = 0; y < maze.length; y++) {
+      for (let x = 0; x < maze[y].length; x++) {
+        const cell = maze[y][x]
+        if (cell === CellType.GhostStart) {
+          const ghostX = x * config.cellSize + config.cellSize / 2
+          const ghostY = y * config.cellSize + config.cellSize / 2
+
+          state.ghosts.push({
+            x: ghostX,
+            y: ghostY,
+            direction: "none",
+            isMoving: false,
+          })
+        }
+      }
+    }
+  }
+
+  createGhosts()
 
   const drawBackground = () => {
     ctx.fillStyle = config.colors.background
@@ -136,16 +182,6 @@ const game = (canvas: HTMLCanvasElement) => {
         const cell = maze[y][x]
         const cellX = x * cellSize
         const cellY = y * cellSize
-
-        if (cell === CellType.GhostStart) {
-          ctx.fillStyle = "red"
-          ctx.fillRect(
-            cellX + cellSize / 4,
-            cellY + cellSize / 4,
-            cellSize / 2,
-            cellSize / 2
-          )
-        }
 
         if (cell === CellType.WallHorizontal) {
           ctx.fillStyle = config.colors.wall
@@ -274,7 +310,7 @@ const game = (canvas: HTMLCanvasElement) => {
     ctx.fillText("Reset", buttonX + boxPadding, buttonY + boxPadding * 2)
   }
 
-  const drawPacman = () => {
+  const drawPathsman = () => {
     const { x, y, mouthAngle, direction } = state.pathsman
     const { size } = config.pathsman
 
@@ -325,6 +361,81 @@ const game = (canvas: HTMLCanvasElement) => {
       ctx.fillStyle = config.colors.primary
       ctx.fill()
     }
+
+    for (const pellet of state.powerPellets) {
+      ctx.beginPath()
+      ctx.arc(
+        pellet.x,
+        pellet.y,
+        config.powerPellets.size,
+        0,
+        Math.PI * 2,
+        true
+      )
+      ctx.fillStyle = config.colors.primary
+      ctx.fill()
+    }
+  }
+
+  const drawGhosts = () => {
+    const size = config.ghosts.size
+    const radius = size / 2
+
+    const colors = ["red", "blue", "pink", "orange"]
+
+    state.ghosts.forEach((ghost, index) => {
+      // REturn index to 0 if it's greater than 3
+      const color = colors[index % colors.length]
+      ctx.fillStyle = color
+
+      ctx.beginPath()
+      ctx.arc(
+        ghost.x + 1,
+        ghost.y,
+        radius,
+        Math.PI * -0.5,
+        Math.PI + Math.PI * -0.2,
+        true
+      )
+
+      ctx.arc(
+        ghost.x - 1,
+        ghost.y,
+        radius,
+        Math.PI * 0.2,
+        Math.PI + Math.PI * 0.5,
+        true
+      )
+
+      ctx.fillRect(ghost.x - radius + 1, ghost.y - 2, size - 2, size / 2)
+      ctx.fill()
+
+      ctx.beginPath()
+      ctx.lineWidth = 1
+      ctx.strokeStyle = "black"
+      ctx.fillStyle = "black"
+      ctx.moveTo(ghost.x - 6, ghost.y + radius)
+      ctx.lineTo(ghost.x - 4, ghost.y + radius - 6)
+      ctx.lineTo(ghost.x, ghost.y + radius)
+      ctx.lineTo(ghost.x + 4, ghost.y + radius - 6)
+      ctx.lineTo(ghost.x + 6, ghost.y + radius)
+      ctx.stroke()
+      ctx.fill()
+
+      // add eyes
+      ctx.beginPath()
+      ctx.fillStyle = "white"
+      ctx.arc(ghost.x - 4, ghost.y - 3, 3, 0, Math.PI * 2, true)
+      ctx.arc(ghost.x + 4, ghost.y - 3, 3, 0, Math.PI * 2, true)
+      ctx.fill()
+
+      // add pupils
+      ctx.beginPath()
+      ctx.fillStyle = "black"
+      ctx.arc(ghost.x - 4, ghost.y - 3.5, 1.5, 0, Math.PI * 2, true)
+      ctx.arc(ghost.x + 4, ghost.y - 3.5, 1.5, 0, Math.PI * 2, true)
+      ctx.fill()
+    })
   }
 
   const drawOverlay = () => {
@@ -373,16 +484,17 @@ const game = (canvas: HTMLCanvasElement) => {
     drawBackground()
     drawMaze()
     drawStats()
-    drawPacman()
+    drawPathsman()
     drawPellets()
+    drawGhosts()
     drawOverlay()
-    drawCurrentCell()
-    drawClickLocation()
+    // drawCurrentCell()
+    // drawClickLocation()
 
     ctx.restore()
   }
 
-  const updatePacman = () => {
+  const updatePathsman = () => {
     // Animate mouth
     if (state.pathsman.isMoving) {
       const mouthSpeed = config.pathsman.mouthSpeed // Speed of mouth opening/closing
@@ -422,17 +534,7 @@ const game = (canvas: HTMLCanvasElement) => {
       newY += config.pathsman.speed
     }
 
-    const pacmanRadius = config.pathsman.size / 2
-
-    // Check for collisions with canvas
-    if (newX - pacmanRadius >= 0 && newX + pacmanRadius <= canvas.width) {
-      state.pathsman.x = newX
-    }
-    if (newY - pacmanRadius >= 0 && newY + pacmanRadius <= canvas.height) {
-      state.pathsman.y = newY
-    }
-
-    // Check for collisions with maze walls
+    const pathsmanRadius = config.pathsman.size / 2
 
     // First, find the cell that pathsman is in currently
     const cellX = Math.floor(state.pathsman.x / config.cellSize)
@@ -447,39 +549,96 @@ const game = (canvas: HTMLCanvasElement) => {
     }
 
     const direction = state.pathsman.direction
-    // let nextCell
+    let adjacentCell
 
-    // if (direction === "right") {
-    //   nextCell = maze[cellY][cellX + 1]
-    // }
-
-    // if (direction === "left") {
-    //   nextCell = maze[cellY][cellX - 1]
-    // }
-
-    // if (direction === "up") {
-    //   nextCell = maze[cellY - 1][cellX]
-    // }
-
-    // if (direction === "down") {
-    //   nextCell = maze[cellY + 1][cellX]
-    // }
+    let willColide = false
 
     if (
-      currentCell === CellType.WallHorizontal ||
-      currentCell === CellType.WallVertical ||
-      currentCell === CellType.WallCornerTopLeft ||
-      currentCell === CellType.WallCornerTopRight ||
-      currentCell === CellType.WallCornerBottomLeft ||
-      currentCell === CellType.WallCornerBottomRight
+      direction === "right" &&
+      state.pathsman.x >=
+        cellX * config.cellSize + config.cellSize - pathsmanRadius
     ) {
-      state.pathsman.isMoving = false
+      adjacentCell = maze[cellY]?.[cellX + 1]
     }
+
+    if (
+      direction === "left" &&
+      state.pathsman.x <= cellX * config.cellSize + pathsmanRadius
+    ) {
+      adjacentCell = maze[cellY]?.[cellX - 1]
+    }
+
+    if (
+      direction === "up" &&
+      state.pathsman.y <= cellY * config.cellSize + pathsmanRadius
+    ) {
+      adjacentCell = maze[cellY - 1]?.[cellX]
+    }
+
+    if (
+      direction === "down" &&
+      state.pathsman.y >=
+        cellY * config.cellSize + config.cellSize - pathsmanRadius
+    ) {
+      adjacentCell = maze[cellY + 1]?.[cellX]
+    }
+
+    // Check for collisions with walls
+    if (
+      adjacentCell === CellType.WallHorizontal ||
+      adjacentCell === CellType.WallVertical ||
+      adjacentCell === CellType.WallCornerTopLeft ||
+      adjacentCell === CellType.WallCornerTopRight ||
+      adjacentCell === CellType.WallCornerBottomLeft ||
+      adjacentCell === CellType.WallCornerBottomRight
+    ) {
+      willColide = true
+    }
+
+    // Check for collisions with canvas
+    // if (newX - pathsmanRadius < 0 || newX + pathsmanRadius > canvas.width) {
+    //   willColide = true
+    // }
+
+    // if (newY - pathsmanRadius < 0 || newY + pathsmanRadius > canvas.height) {
+    //   willColide = true
+    // }
+
+    if (willColide) {
+      state.pathsman.isMoving = false
+      return
+    }
+
+    // Allow wrapping around the maze
+    const { x: mazeWidth, y: mazeHeight } = calculateMazeDimensions()
+
+    // If going right, should wrap to the same x position on the left side of the maze
+    if (direction === "right" && newX + pathsmanRadius > mazeWidth) {
+      newX = 0 + pathsmanRadius
+    }
+
+    // If going left, should wrap to the same x position on the right side of the maze
+    if (direction === "left" && newX - pathsmanRadius < 0) {
+      newX = mazeWidth - pathsmanRadius
+    }
+
+    // If going up, should wrap to the same y position on the bottom side of the maze
+    if (direction === "up" && newY - pathsmanRadius < 0) {
+      newY = mazeHeight - pathsmanRadius
+    }
+
+    // If going down, should wrap to the same y position on the top side of the maze
+    if (direction === "down" && newY + pathsmanRadius > mazeHeight) {
+      newY = 0 + pathsmanRadius
+    }
+
+    state.pathsman.x = newX
+    state.pathsman.y = newY
   }
 
   const updatePellets = () => {
     // Check for collisions
-    const pacmanRadius = config.pathsman.size / 2
+    const pathsmanRadius = config.pathsman.size / 2
 
     for (let i = 0; i < state.pellets.length; i++) {
       const pellet = state.pellets[i]
@@ -488,8 +647,21 @@ const game = (canvas: HTMLCanvasElement) => {
           Math.pow(state.pathsman.y - pellet.y, 2)
       )
 
-      if (distance < pacmanRadius + config.pellets.size) {
+      if (distance < pathsmanRadius + config.pellets.size) {
         state.pellets.splice(i, 1)
+        i--
+      }
+    }
+
+    for (let i = 0; i < state.powerPellets.length; i++) {
+      const pellet = state.powerPellets[i]
+      const distance = Math.sqrt(
+        Math.pow(state.pathsman.x - pellet.x, 2) +
+          Math.pow(state.pathsman.y - pellet.y, 2)
+      )
+
+      if (distance < pathsmanRadius + config.powerPellets.size) {
+        state.powerPellets.splice(i, 1)
         i--
       }
     }
@@ -603,7 +775,7 @@ const game = (canvas: HTMLCanvasElement) => {
     const deltaTime = timestamp - state.previousAnimationTimestamp
 
     // Update stuff
-    updatePacman()
+    updatePathsman()
     updatePellets()
     updateStats(deltaTime)
 
@@ -618,7 +790,7 @@ const game = (canvas: HTMLCanvasElement) => {
   }
 
   const run = () => {
-    console.log("Starting Pacman game...", canvas)
+    console.log("Starting Pathsman game...", canvas)
 
     init()
     attachEvents()
@@ -629,14 +801,14 @@ const game = (canvas: HTMLCanvasElement) => {
   }
 
   const quit = () => {
-    console.log("Stopping Pacman game...")
+    console.log("Stopping Pathsman game...")
 
     state.previousAnimationTimestamp = undefined
     detachEvents()
   }
 
   const reset = () => {
-    console.log("Resetting Pacman game...")
+    console.log("Resetting Pathsman game...")
     quit()
     Object.assign(state, { ...getInitialState() })
     createPellets()

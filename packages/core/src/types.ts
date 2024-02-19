@@ -8,7 +8,7 @@ export enum CellType {
   WallCornerTopRight = 6,
   WallCornerBottomLeft = 7,
   WallCornerBottomRight = 8,
-  PacmanStart = 9,
+  PathsmanStart = 9,
   GhostStart = 10,
 }
 
@@ -29,6 +29,10 @@ export type GameConfig = {
     mouthSpeed: number
     maxLowestAngle: number
   }
+  ghosts: {
+    speed: number
+    size: number
+  }
   colors: {
     primary: string
     background: string
@@ -38,9 +42,10 @@ export type GameConfig = {
   }
   pellets: {
     size: number
-    count: number
   }
-  ghostSpeed: number
+  powerPellets: {
+    size: number
+  }
   cellSize: number
   sidebarWidth: number
   overlayMessages: {
@@ -62,8 +67,15 @@ export type GameState = {
     mouthOpening: boolean
     mouthAngle: number
   }
+  ghosts: {
+    x: number
+    y: number
+    direction: Direction
+    isMoving: boolean
+  }[]
   previousAnimationTimestamp: number | undefined
   pellets: { x: number; y: number }[]
+  powerPellets: { x: number; y: number }[]
   currentFPS: number
   clickLocation?: { x: number; y: number }
   phase: "playing" | "game-over" | "game-won" | "paused"

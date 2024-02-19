@@ -1,14 +1,14 @@
 import { useRef, useEffect } from "react"
-import createPacman from "./game"
+import createPathsman from "./game"
 
-const PacmanComponent = () => {
+const PathsmanComponent = () => {
   const canvasRef = useRef(null)
 
   useEffect(() => {
     if (!canvasRef.current) return
 
     const canvas = canvasRef.current
-    const pathsman = createPacman(canvas)
+    const pathsman = createPathsman(canvas)
     pathsman.run()
 
     return () => {
@@ -19,4 +19,4 @@ const PacmanComponent = () => {
   return <canvas id="pathsman" ref={canvasRef} />
 }
 
-export default PacmanComponent
+export default PathsmanComponent
