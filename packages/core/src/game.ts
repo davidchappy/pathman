@@ -2,54 +2,17 @@ import { CellType } from "./types"
 
 import type { GameConfig, GameState } from "./types"
 import { defaultMaze } from "./mazes"
+import config from "./config"
 
-const config: GameConfig = {
-  pathsman: {
-    speed: 1.5,
-    startX: 30,
-    startY: 30,
-    startDirection: "none",
-    size: 18,
-    mouthSpeed: 0.1,
-    maxLowestAngle: -0.6,
-  },
-  ghosts: {
-    speed: 1,
-    size: 20,
-  },
-  cellSize: 20,
-  colors: {
-    primary: "yellow",
-    background: "black",
-    text: "yellow",
-    secondaryText: "black",
-    wall: "blue",
-  },
-  pellets: {
-    size: 2,
-  },
-  powerPellets: {
-    size: 6,
-  },
-  sidebarWidth: 120,
-  overlayMessages: {
-    paused: "Paused. Press spacebar to continue.",
-    gameOver: "Game over. Refresh to play again.",
-    gameWon: "You won! Refresh to play again.",
-  },
-  maze: defaultMaze,
-  wallWidth: 2,
-}
-
-const getInitialPathsmanPosition = () => {
-  let pathsmanPosition = {
-    x: config.pathsman.startX,
-    y: config.pathsman.startY,
+const getInitialPathmanPosition = () => {
+  let pathmanPosition = {
+    x: config.pathman.startX,
+    y: config.pathman.startY,
   }
   config.maze.cells.forEach((row, y) => {
     row.forEach((cell, x) => {
-      if (cell === CellType.PathsmanStart) {
-        pathsmanPosition = {
+      if (cell === CellType.Pathman) {
+        pathmanPosition = {
           x: x * config.cellSize + config.cellSize / 2,
           y: y * config.cellSize + config.cellSize / 2,
         }
@@ -57,18 +20,18 @@ const getInitialPathsmanPosition = () => {
     })
   })
 
-  return pathsmanPosition
+  return pathmanPosition
 }
 
 const getInitialState = (): GameState => {
-  const pathsmanPosition = getInitialPathsmanPosition()
+  const pathmanPosition = getInitialPathmanPosition()
 
   return {
     scale: 1,
-    pathsman: {
-      x: pathsmanPosition.x,
-      y: pathsmanPosition.y,
-      direction: config.pathsman.startDirection,
+    pathman: {
+      x: pathmanPosition.x,
+      y: pathmanPosition.y,
+      direction: config.pathman.startDirection,
       isMoving: false,
       mouthOpening: false,
       mouthAngle: 0,
@@ -144,7 +107,7 @@ const game = (canvas: HTMLCanvasElement) => {
     for (let y = 0; y < maze.length; y++) {
       for (let x = 0; x < maze[y].length; x++) {
         const cell = maze[y][x]
-        if (cell === CellType.GhostStart) {
+        if (cell === CellType.Ghost) {
           const ghostX = x * config.cellSize + config.cellSize / 2
           const ghostY = y * config.cellSize + config.cellSize / 2
 
@@ -310,9 +273,9 @@ const game = (canvas: HTMLCanvasElement) => {
     ctx.fillText("Reset", buttonX + boxPadding, buttonY + boxPadding * 2)
   }
 
-  const drawPathsman = () => {
-    const { x, y, mouthAngle, direction } = state.pathsman
-    const { size } = config.pathsman
+  const drawPathman = () => {
+    const { x, y, mouthAngle, direction } = state.pathman
+    const { size } = config.pathman
 
     const radius = size / 2
 
@@ -484,7 +447,7 @@ const game = (canvas: HTMLCanvasElement) => {
     drawBackground()
     drawMaze()
     drawStats()
-    drawPathsman()
+    drawPathman()
     drawPellets()
     drawGhosts()
     drawOverlay()
@@ -494,51 +457,51 @@ const game = (canvas: HTMLCanvasElement) => {
     ctx.restore()
   }
 
-  const updatePathsman = () => {
+  const updatePathman = () => {
     // Animate mouth
-    if (state.pathsman.isMoving) {
-      const mouthSpeed = config.pathsman.mouthSpeed // Speed of mouth opening/closing
-      const maxLowestAngle = config.pathsman.maxLowestAngle // Maximum mouth angle in radians
+    if (state.pathman.isMoving) {
+      const mouthSpeed = config.pathman.mouthSpeed // Speed of mouth opening/closing
+      const maxLowestAngle = config.pathman.maxLowestAngle // Maximum mouth angle in radians
 
-      if (state.pathsman.mouthOpening) {
-        state.pathsman.mouthAngle -= mouthSpeed // Increase the mouth angle
-        if (state.pathsman.mouthAngle < maxLowestAngle) {
-          state.pathsman.mouthAngle = maxLowestAngle // Limit the mouth angle
-          state.pathsman.mouthOpening = false // Start closing the mouth
+      if (state.pathman.mouthOpening) {
+        state.pathman.mouthAngle -= mouthSpeed // Increase the mouth angle
+        if (state.pathman.mouthAngle < maxLowestAngle) {
+          state.pathman.mouthAngle = maxLowestAngle // Limit the mouth angle
+          state.pathman.mouthOpening = false // Start closing the mouth
         }
       } else {
-        state.pathsman.mouthAngle += mouthSpeed // Decrease the mouth angle
-        if (state.pathsman.mouthAngle > 0) {
-          state.pathsman.mouthAngle = 0
-          state.pathsman.mouthOpening = true // Start opening the mouth
+        state.pathman.mouthAngle += mouthSpeed // Decrease the mouth angle
+        if (state.pathman.mouthAngle > 0) {
+          state.pathman.mouthAngle = 0
+          state.pathman.mouthOpening = true // Start opening the mouth
         }
       }
     }
 
     // Move
-    if (state.pathsman.direction === "none" || !state.pathsman.isMoving) return
+    if (state.pathman.direction === "none" || !state.pathman.isMoving) return
 
-    let newX = state.pathsman.x
-    let newY = state.pathsman.y
+    let newX = state.pathman.x
+    let newY = state.pathman.y
 
-    if (state.pathsman.direction === "right") {
-      newX += config.pathsman.speed
+    if (state.pathman.direction === "right") {
+      newX += config.pathman.speed
     }
-    if (state.pathsman.direction === "left") {
-      newX -= config.pathsman.speed
+    if (state.pathman.direction === "left") {
+      newX -= config.pathman.speed
     }
-    if (state.pathsman.direction === "up") {
-      newY -= config.pathsman.speed
+    if (state.pathman.direction === "up") {
+      newY -= config.pathman.speed
     }
-    if (state.pathsman.direction === "down") {
-      newY += config.pathsman.speed
+    if (state.pathman.direction === "down") {
+      newY += config.pathman.speed
     }
 
-    const pathsmanRadius = config.pathsman.size / 2
+    const pathmanRadius = config.pathman.size / 2
 
-    // First, find the cell that pathsman is in currently
-    const cellX = Math.floor(state.pathsman.x / config.cellSize)
-    const cellY = Math.floor(state.pathsman.y / config.cellSize)
+    // First, find the cell that pathman is in currently
+    const cellX = Math.floor(state.pathman.x / config.cellSize)
+    const cellY = Math.floor(state.pathman.y / config.cellSize)
 
     // Check for collisions
     const maze = config.maze.cells
@@ -548,37 +511,37 @@ const game = (canvas: HTMLCanvasElement) => {
       y: cellY,
     }
 
-    const direction = state.pathsman.direction
+    const direction = state.pathman.direction
     let adjacentCell
 
     let willColide = false
 
     if (
       direction === "right" &&
-      state.pathsman.x >=
-        cellX * config.cellSize + config.cellSize - pathsmanRadius
+      state.pathman.x >=
+        cellX * config.cellSize + config.cellSize - pathmanRadius
     ) {
       adjacentCell = maze[cellY]?.[cellX + 1]
     }
 
     if (
       direction === "left" &&
-      state.pathsman.x <= cellX * config.cellSize + pathsmanRadius
+      state.pathman.x <= cellX * config.cellSize + pathmanRadius
     ) {
       adjacentCell = maze[cellY]?.[cellX - 1]
     }
 
     if (
       direction === "up" &&
-      state.pathsman.y <= cellY * config.cellSize + pathsmanRadius
+      state.pathman.y <= cellY * config.cellSize + pathmanRadius
     ) {
       adjacentCell = maze[cellY - 1]?.[cellX]
     }
 
     if (
       direction === "down" &&
-      state.pathsman.y >=
-        cellY * config.cellSize + config.cellSize - pathsmanRadius
+      state.pathman.y >=
+        cellY * config.cellSize + config.cellSize - pathmanRadius
     ) {
       adjacentCell = maze[cellY + 1]?.[cellX]
     }
@@ -596,16 +559,16 @@ const game = (canvas: HTMLCanvasElement) => {
     }
 
     // Check for collisions with canvas
-    // if (newX - pathsmanRadius < 0 || newX + pathsmanRadius > canvas.width) {
+    // if (newX - pathmanRadius < 0 || newX + pathmanRadius > canvas.width) {
     //   willColide = true
     // }
 
-    // if (newY - pathsmanRadius < 0 || newY + pathsmanRadius > canvas.height) {
+    // if (newY - pathmanRadius < 0 || newY + pathmanRadius > canvas.height) {
     //   willColide = true
     // }
 
     if (willColide) {
-      state.pathsman.isMoving = false
+      state.pathman.isMoving = false
       return
     }
 
@@ -613,41 +576,41 @@ const game = (canvas: HTMLCanvasElement) => {
     const { x: mazeWidth, y: mazeHeight } = calculateMazeDimensions()
 
     // If going right, should wrap to the same x position on the left side of the maze
-    if (direction === "right" && newX + pathsmanRadius > mazeWidth) {
-      newX = 0 + pathsmanRadius
+    if (direction === "right" && newX + pathmanRadius > mazeWidth) {
+      newX = 0 + pathmanRadius
     }
 
     // If going left, should wrap to the same x position on the right side of the maze
-    if (direction === "left" && newX - pathsmanRadius < 0) {
-      newX = mazeWidth - pathsmanRadius
+    if (direction === "left" && newX - pathmanRadius < 0) {
+      newX = mazeWidth - pathmanRadius
     }
 
     // If going up, should wrap to the same y position on the bottom side of the maze
-    if (direction === "up" && newY - pathsmanRadius < 0) {
-      newY = mazeHeight - pathsmanRadius
+    if (direction === "up" && newY - pathmanRadius < 0) {
+      newY = mazeHeight - pathmanRadius
     }
 
     // If going down, should wrap to the same y position on the top side of the maze
-    if (direction === "down" && newY + pathsmanRadius > mazeHeight) {
-      newY = 0 + pathsmanRadius
+    if (direction === "down" && newY + pathmanRadius > mazeHeight) {
+      newY = 0 + pathmanRadius
     }
 
-    state.pathsman.x = newX
-    state.pathsman.y = newY
+    state.pathman.x = newX
+    state.pathman.y = newY
   }
 
   const updatePellets = () => {
     // Check for collisions
-    const pathsmanRadius = config.pathsman.size / 2
+    const pathmanRadius = config.pathman.size / 2
 
     for (let i = 0; i < state.pellets.length; i++) {
       const pellet = state.pellets[i]
       const distance = Math.sqrt(
-        Math.pow(state.pathsman.x - pellet.x, 2) +
-          Math.pow(state.pathsman.y - pellet.y, 2)
+        Math.pow(state.pathman.x - pellet.x, 2) +
+          Math.pow(state.pathman.y - pellet.y, 2)
       )
 
-      if (distance < pathsmanRadius + config.pellets.size) {
+      if (distance < pathmanRadius + config.pellets.size) {
         state.pellets.splice(i, 1)
         i--
       }
@@ -656,11 +619,11 @@ const game = (canvas: HTMLCanvasElement) => {
     for (let i = 0; i < state.powerPellets.length; i++) {
       const pellet = state.powerPellets[i]
       const distance = Math.sqrt(
-        Math.pow(state.pathsman.x - pellet.x, 2) +
-          Math.pow(state.pathsman.y - pellet.y, 2)
+        Math.pow(state.pathman.x - pellet.x, 2) +
+          Math.pow(state.pathman.y - pellet.y, 2)
       )
 
-      if (distance < pathsmanRadius + config.powerPellets.size) {
+      if (distance < pathmanRadius + config.powerPellets.size) {
         state.powerPellets.splice(i, 1)
         i--
       }
@@ -701,23 +664,23 @@ const game = (canvas: HTMLCanvasElement) => {
     if (state.phase === "paused") return
 
     if (event.key === "ArrowRight" || event.key === "d") {
-      state.pathsman.direction = "right"
-      state.pathsman.isMoving = true
+      state.pathman.direction = "right"
+      state.pathman.isMoving = true
     }
 
     if (event.key === "ArrowLeft" || event.key === "a") {
-      state.pathsman.direction = "left"
-      state.pathsman.isMoving = true
+      state.pathman.direction = "left"
+      state.pathman.isMoving = true
     }
 
     if (event.key === "ArrowUp" || event.key === "w") {
-      state.pathsman.direction = "up"
-      state.pathsman.isMoving = true
+      state.pathman.direction = "up"
+      state.pathman.isMoving = true
     }
 
     if (event.key === "ArrowDown" || event.key === "s") {
-      state.pathsman.direction = "down"
-      state.pathsman.isMoving = true
+      state.pathman.direction = "down"
+      state.pathman.isMoving = true
     }
   }
 
@@ -732,8 +695,6 @@ const game = (canvas: HTMLCanvasElement) => {
     }, 4000)
 
     state.clickLocation = clickLocation
-
-    console.log("click", clickLocation)
 
     const resetButton = {
       x: ctx.canvas.width - 120,
@@ -775,7 +736,7 @@ const game = (canvas: HTMLCanvasElement) => {
     const deltaTime = timestamp - state.previousAnimationTimestamp
 
     // Update stuff
-    updatePathsman()
+    updatePathman()
     updatePellets()
     updateStats(deltaTime)
 
@@ -790,7 +751,7 @@ const game = (canvas: HTMLCanvasElement) => {
   }
 
   const run = () => {
-    console.log("Starting Pathsman game...", canvas)
+    console.log("Starting Pathman game...", canvas)
 
     init()
     attachEvents()
@@ -801,14 +762,14 @@ const game = (canvas: HTMLCanvasElement) => {
   }
 
   const quit = () => {
-    console.log("Stopping Pathsman game...")
+    console.log("Stopping Pathman game...")
 
     state.previousAnimationTimestamp = undefined
     detachEvents()
   }
 
   const reset = () => {
-    console.log("Resetting Pathsman game...")
+    console.log("Resetting Pathman game...")
     quit()
     Object.assign(state, { ...getInitialState() })
     createPellets()

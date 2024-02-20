@@ -1,5 +1,5 @@
 import React from "react"
-import Pacman from "@pathsman/core"
+import Pacman from "@pathman/core"
 
 export default function Index() {
   return <Pacman />

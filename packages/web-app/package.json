@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "@pathsman/web-app",
+  "name": "@pathman/web-app",
   "version": "1.0.0",
   "license": "SEE LICENSE IN ../../LICENSE",
   "scripts": {
@@ -10,7 +10,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@pathsman/components": "*",
+    "@pathman/components": "*",
     "next": "^13.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

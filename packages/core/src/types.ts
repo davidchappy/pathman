@@ -8,8 +8,14 @@ export enum CellType {
   WallCornerTopRight = 6,
   WallCornerBottomLeft = 7,
   WallCornerBottomRight = 8,
-  PathsmanStart = 9,
-  GhostStart = 10,
+  Pathman = 9,
+  Ghost = 10,
+}
+
+export type Entity = {
+  x: number
+  y: number
+  type: CellType
 }
 
 export type Maze = {
@@ -20,7 +26,7 @@ export type Maze = {
 type Direction = "right" | "left" | "up" | "down" | "none"
 
 export type GameConfig = {
-  pathsman: {
+  pathman: {
     speed: number
     startX: number
     startY: number
@@ -59,7 +65,7 @@ export type GameConfig = {
 
 export type GameState = {
   scale: number
-  pathsman: {
+  pathman: {
     x: number
     y: number
     direction: Direction

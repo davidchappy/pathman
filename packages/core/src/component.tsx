@@ -1,22 +1,22 @@
 import { useRef, useEffect } from "react"
-import createPathsman from "./game"
+import createPathman from "./game"
 
-const PathsmanComponent = () => {
+const PathmanComponent = () => {
   const canvasRef = useRef(null)
 
   useEffect(() => {
     if (!canvasRef.current) return
 
     const canvas = canvasRef.current
-    const pathsman = createPathsman(canvas)
-    pathsman.run()
+    const pathman = createPathman(canvas)
+    pathman.run()
 
     return () => {
-      pathsman.quit()
+      pathman.quit()
     }
   }, [canvasRef.current])
 
-  return <canvas id="pathsman" ref={canvasRef} />
+  return <canvas id="pathman" ref={canvasRef} />
 }
 
-export default PathsmanComponent
+export default PathmanComponent
