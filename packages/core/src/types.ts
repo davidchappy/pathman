@@ -15,7 +15,17 @@ export enum CellType {
 export type Entity = {
   x: number
   y: number
-  type: CellType
+  direction?: Direction
+  isMoving?: boolean
+}
+
+export type PathmanEntity = Entity & {
+  mouthOpening: boolean
+  mouthAngle: number
+}
+
+export type GhostEntity = Entity & {
+  path: Entity[]
 }
 
 export type Maze = {
@@ -65,29 +75,14 @@ export type GameConfig = {
 
 export type GameState = {
   scale: number
-  pathman: {
-    x: number
-    y: number
-    direction: Direction
-    isMoving: boolean
-    mouthOpening: boolean
-    mouthAngle: number
-  }
-  ghosts: {
-    x: number
-    y: number
-    direction: Direction
-    isMoving: boolean
-  }[]
+  pathman: PathmanEntity
+  ghosts: GhostEntity[]
+  pellets: Entity[]
+  powerPellets: Entity[]
   previousAnimationTimestamp: number | undefined
-  pellets: { x: number; y: number }[]
-  powerPellets: { x: number; y: number }[]
   currentFPS: number
-  clickLocation?: { x: number; y: number }
+  clickLocation: Entity | null
   phase: "playing" | "game-over" | "game-won" | "paused"
   overlayText: string
-  currentCellPosition: {
-    x: number
-    y: number
-  } | null
+  currentCellPosition: Entity | null
 }
