@@ -586,6 +586,10 @@ const game = (canvas: HTMLCanvasElement) => {
     attachEvents()
     draw()
 
+    // fire a resize event
+    const resizeEvent = new Event("resize")
+    window.dispatchEvent(resizeEvent)
+
     // Start the animation loop
     requestAnimationFrame(animate)
   }

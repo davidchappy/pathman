@@ -39,10 +39,6 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
     mazePosition = calculateMazePosition()
   })
 
-  window.document.addEventListener("DOMContentLoaded", () => {
-    mazePosition = calculateMazePosition()
-  })
-
   const drawMaze = () => {
     const cellSize = config.cellSize
 
