@@ -29,6 +29,7 @@ export type Maze = {
 }
 
 export type GameConfig = {
+  debug: boolean
   pathman: {
     speed: number
     startX: number
@@ -64,8 +65,6 @@ export type GameConfig = {
   }
   maze: Maze
   wallWidth: number
-  showGrid: boolean
-  showRulers: boolean
 }
 
 export type Entity = {

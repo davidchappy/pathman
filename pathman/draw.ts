@@ -26,8 +26,8 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
     const mazeHeight = config.maze.cells.length * config.cellSize
 
     return {
-      x: canvas.width / 2,
-      y: canvas.height / 2 + mazeHeight / 2,
+      x: canvas.width / 2 - mazeWidth / 2,
+      y: canvas.height / 2 - mazeHeight / 2,
       width: mazeWidth,
       height: mazeHeight,
     }
@@ -56,7 +56,7 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
         const cellX = x * cellSize
         const cellY = y * cellSize
 
-        if (config.showGrid) {
+        if (config.debug) {
           // draw a box around each cell
           ctx.strokeStyle = "green"
           ctx.lineWidth = 1
@@ -420,7 +420,7 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
 
     drawBackground()
     drawMaze()
-    if (config.showRulers) {
+    if (config.debug) {
       drawRulers()
     }
     drawStats()

@@ -2,6 +2,7 @@ import { defaultMaze } from "./mazes"
 import { GameConfig } from "./types"
 
 const config: GameConfig = {
+  debug: false,
   pathman: {
     speed: 1.5,
     startX: 30,
@@ -37,8 +38,6 @@ const config: GameConfig = {
   },
   maze: defaultMaze,
   wallWidth: 2,
-  showGrid: true,
-  showRulers: true,
 }
 
 export default config
