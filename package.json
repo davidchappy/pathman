@@ -5,15 +5,19 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "export": "next export",
+    "start": "next start",
     "format": "npx prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\""
   },
-  "workspaces": [
-    "packages/*"
-  ],
   "devDependencies": {
     "@types/classnames": "^2.2.10",
     "@types/node": "^18.0.0",
     "@types/react": "^18.0.14",
-    "typescript": "^4.0.2"
+    "typescript": "^4.0.2",
+    "next": "^13.5.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   }
 }
