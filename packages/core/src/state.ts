@@ -5,6 +5,7 @@ import {
   createPathman,
 } from "./entities"
 import { GameState } from "./types"
+import config from "./config"
 
 export const getInitialState = (): GameState => {
   const pellets = createPellets()
@@ -20,9 +21,11 @@ export const getInitialState = (): GameState => {
     pellets,
     powerPellets,
     currentFPS: 0,
-    clickLocation: null,
     phase: "playing",
     overlayText: "",
-    currentCellPosition: null,
+    debug: {
+      clickLocation: null,
+      currentPathmanPosition: null,
+    },
   }
 }

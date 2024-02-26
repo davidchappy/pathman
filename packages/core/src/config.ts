@@ -37,6 +37,8 @@ const config: GameConfig = {
   },
   maze: defaultMaze,
   wallWidth: 2,
+  showGrid: true,
+  showRulers: true,
 }
 
 export default config

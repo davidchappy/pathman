@@ -12,28 +12,21 @@ export enum CellType {
   Ghost = 10,
 }
 
-export type Entity = {
+export type Direction = "right" | "left" | "up" | "down" | "none"
+
+export type Node = {
   x: number
   y: number
-  direction?: Direction
-  isMoving?: boolean
 }
 
-export type PathmanEntity = Entity & {
-  mouthOpening: boolean
-  mouthAngle: number
-}
-
-export type GhostEntity = Entity & {
-  path: Entity[]
+export type Cell = Node & {
+  type?: CellType
 }
 
 export type Maze = {
   cells: CellType[][]
   name: string
 }
-
-type Direction = "right" | "left" | "up" | "down" | "none"
 
 export type GameConfig = {
   pathman: {
@@ -71,6 +64,33 @@ export type GameConfig = {
   }
   maze: Maze
   wallWidth: number
+  showGrid: boolean
+  showRulers: boolean
+}
+
+export type Entity = {
+  x: number // canvas x/y values
+  y: number // canvas x/y values
+  currentCell?: Cell
+  id?: number | string
+  direction?: Direction
+  isMoving?: boolean
+}
+
+export type PathmanEntity = Entity & {
+  mouthOpening: boolean
+  mouthAngle: number
+}
+
+export type GhostEntity = Entity & {
+  path: PathNode[]
+}
+
+export type PathNode = Node & {
+  gCost: number
+  hCost: number
+  fCost: number
+  parent?: PathNode
 }
 
 export type GameState = {
@@ -81,8 +101,10 @@ export type GameState = {
   powerPellets: Entity[]
   previousAnimationTimestamp: number | undefined
   currentFPS: number
-  clickLocation: Entity | null
   phase: "playing" | "game-over" | "game-won" | "paused"
   overlayText: string
-  currentCellPosition: Entity | null
+  debug: {
+    clickLocation: Entity | null
+    currentPathmanPosition: Entity | null
+  }
 }

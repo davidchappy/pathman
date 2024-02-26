@@ -1,14 +1,14 @@
-import { CellType } from "./types"
-
-import type { GameState } from "./types"
+import type { GameState, Direction } from "./types"
+import { CellType, Entity, PathNode, Node } from "./types"
 import config from "./config"
 import { calculateMazeDimensions } from "./maze"
 import { getInitialState } from "./state"
-import getDraw from "./draw"
+import useDraw from "./draw"
+import { aStar as findPath } from "./pathfinding"
 
 const game = (canvas: HTMLCanvasElement) => {
   let state: GameState = getInitialState()
-  const { draw, drawOverlay } = getDraw(canvas, state)
+  const { draw, drawOverlay } = useDraw(canvas, state)
 
   const init = () => {
     canvas.width = window.innerWidth
@@ -18,7 +18,6 @@ const game = (canvas: HTMLCanvasElement) => {
   }
 
   const calculateScale = () => {
-    console.log("Calculating scale...")
     // TODO: calculate width based on the number of cells in the maze
     // const mazeWidth = 0 + config.sidebarWidth
     const scale = window.innerWidth / window.innerWidth
@@ -26,6 +25,11 @@ const game = (canvas: HTMLCanvasElement) => {
   }
 
   const updatePathman = () => {
+    // First, find the cell that pathman is in currently
+    const cellX = Math.floor(state.pathman.x / config.cellSize)
+    const cellY = Math.floor(state.pathman.y / config.cellSize)
+    state.pathman.currentCell = { x: cellX, y: cellY }
+
     // Animate mouth
     if (state.pathman.isMoving) {
       const mouthSpeed = config.pathman.mouthSpeed // Speed of mouth opening/closing
@@ -67,16 +71,13 @@ const game = (canvas: HTMLCanvasElement) => {
 
     const pathmanRadius = config.pathman.size / 2
 
-    // First, find the cell that pathman is in currently
-    const cellX = Math.floor(state.pathman.x / config.cellSize)
-    const cellY = Math.floor(state.pathman.y / config.cellSize)
-
     // Check for collisions
     const maze = config.maze.cells
-    const currentCell = maze[cellY][cellX]
-    state.currentCellPosition = {
-      x: cellX,
-      y: cellY,
+    const currentCell = { x: cellX, y: cellY }
+    state.debug.currentPathmanPosition = {
+      x: state.pathman.x,
+      y: state.pathman.y,
+      currentCell,
     }
 
     const direction = state.pathman.direction
@@ -165,6 +166,264 @@ const game = (canvas: HTMLCanvasElement) => {
 
     state.pathman.x = newX
     state.pathman.y = newY
+    state.pathman.currentCell = {
+      x: Math.floor(newX / config.cellSize),
+      y: Math.floor(newY / config.cellSize),
+    }
+  }
+
+  const updateGhosts = () => {
+    const ghosts = state.ghosts
+
+    if (!state.pathman.currentCell) return
+
+    ghosts.forEach((ghost, index) => {
+      // First, find the cell that ghost is in currently
+      const cellX = Math.floor(ghost.x / config.cellSize)
+      const cellY = Math.floor(ghost.y / config.cellSize)
+      const currentCell = { x: cellX, y: cellY }
+      ghost.currentCell = currentCell
+
+      if (ghost.path.length === 0) {
+        ghost.path = findPath(
+          { x: ghost.currentCell.x, y: ghost.currentCell.y },
+          {
+            x: state.pathman.currentCell!.x || 1,
+            y: state.pathman.currentCell!.y || 1,
+          },
+          config.maze.cells
+        )
+      }
+
+      // Move
+      const ghostRadius = config.ghosts.size / 2
+      const maze = config.maze.cells
+
+      let newX = ghost.x
+      let newY = ghost.y
+
+      // Advance towards the next step in the path
+      const calculateDirection = (
+        entity: Entity,
+        nextStep: PathNode
+      ): Direction => {
+        // check for same cell
+        if (
+          nextStep.x === entity.currentCell!.x &&
+          nextStep.y === entity.currentCell!.y
+        ) {
+          return entity.direction!
+        }
+
+        // Calculate the center position of the next cell in absolute canvas coordinates
+        const nextCellCenterX =
+          nextStep.x * config.cellSize + config.cellSize / 2
+        const nextCellCenterY =
+          nextStep.y * config.cellSize + config.cellSize / 2
+
+        // Calculate the difference in cell coordinates between the entity's current cell and the next step
+        const cellDeltaX = nextStep.x - entity.currentCell!.x
+        const cellDeltaY = nextStep.y - entity.currentCell!.y
+
+        // Determine the primary axis of movement based on the larger delta
+        const primaryAxis =
+          Math.abs(cellDeltaX) > Math.abs(cellDeltaY) ? "x" : "y"
+
+        // Initialize the direction as "none"
+        let direction: Direction = "none"
+
+        // Determine the direction based on the primary axis and the sign of the delta
+        if (primaryAxis === "x") {
+          direction = cellDeltaX > 0 ? "right" : "left"
+        } else {
+          direction = cellDeltaY > 0 ? "down" : "up"
+        }
+
+        if (entity.direction === "none") {
+          return direction
+        }
+
+        // Check if the entity has reached the center of the next cell along the primary axis of movement
+        // If not, continue in the current direction
+        if (entity.direction === "right" && entity.x < nextCellCenterX)
+          return entity.direction!
+        if (entity.direction === "left" && entity.x > nextCellCenterX)
+          return entity.direction!
+        if (entity.direction === "up" && entity.y > nextCellCenterY)
+          return entity.direction!
+        if (entity.direction === "down" && entity.y < nextCellCenterY)
+          return entity.direction!
+
+        // Return the new direction if the entity has reached the center of the next cell
+        return direction
+      }
+
+      if (ghost.path.length > 0) {
+        if (
+          ghost.path[0].x === ghost.currentCell.x &&
+          ghost.path[0].y === ghost.currentCell.y
+        ) {
+          ghost.path.shift()
+        }
+
+        const nextStep: PathNode = ghost.path[0]! // Get the next step in the path
+
+        // console.log(`ghost ${index} next step`, nextStep.x, nextStep.y, ghost.direction)
+
+        if (!nextStep) return
+
+        ghost.direction = calculateDirection(ghost, nextStep) // Calculate the new direction based on the next step
+        // console.log(`ghost ${index} new direction`, ghost.direction)
+      }
+
+      // Move
+      if (ghost.direction === "right") {
+        newX += config.ghosts.speed
+      }
+      if (ghost.direction === "left") {
+        newX -= config.ghosts.speed
+      }
+      if (ghost.direction === "up") {
+        newY -= config.ghosts.speed
+      }
+      if (ghost.direction === "down") {
+        newY += config.ghosts.speed
+      }
+
+      // Check for collisions
+      const direction = ghost.direction
+      let adjacentCellType
+      let adjacentCell: Node | undefined
+
+      let willColide = false
+
+      if (
+        direction === "right" &&
+        ghost.x >= cellX * config.cellSize + config.cellSize - ghostRadius
+      ) {
+        adjacentCellType = maze[cellY]?.[cellX + 1]
+        adjacentCell = { x: cellX + 1, y: cellY }
+      }
+
+      if (
+        direction === "left" &&
+        ghost.x <= cellX * config.cellSize + ghostRadius
+      ) {
+        adjacentCellType = maze[cellY]?.[cellX - 1]
+        adjacentCell = { x: cellX - 1, y: cellY }
+      }
+
+      if (
+        direction === "up" &&
+        ghost.y <= cellY * config.cellSize + ghostRadius
+      ) {
+        adjacentCellType = maze[cellY - 1]?.[cellX]
+        adjacentCell = { x: cellX, y: cellY - 1 }
+      }
+
+      if (
+        direction === "down" &&
+        ghost.y >= cellY * config.cellSize + config.cellSize - ghostRadius
+      ) {
+        adjacentCellType = maze[cellY + 1]?.[cellX]
+        adjacentCell = { x: cellX, y: cellY + 1 }
+      }
+
+      // Check for collisions with walls
+      if (
+        adjacentCellType === CellType.WallHorizontal ||
+        adjacentCellType === CellType.WallVertical ||
+        adjacentCellType === CellType.WallCornerBottomLeft ||
+        adjacentCellType === CellType.WallCornerBottomRight ||
+        adjacentCellType === CellType.WallCornerTopLeft ||
+        adjacentCellType === CellType.WallCornerTopRight
+      ) {
+        console.log(`ghost collided with wall`)
+        willColide = true
+      }
+
+      if (
+        adjacentCell?.x === state.pathman.currentCell?.x &&
+        adjacentCell?.y === state.pathman.currentCell?.y
+      ) {
+        console.log(`ghost collided with pathman`)
+        willColide = true
+        state.phase = "game-over"
+      }
+
+      const otherGhosts = ghosts.filter((g) => g.id !== ghost.id)
+      otherGhosts.forEach((otherGhost) => {
+        if (
+          adjacentCell?.x === otherGhost.currentCell!.x &&
+          adjacentCell?.y === otherGhost.currentCell!.y
+        ) {
+          console.log(`ghost collided with another ghost`)
+          willColide = true
+        }
+      })
+
+      if (willColide) {
+        ghost.isMoving = false
+        return
+      }
+
+      // Allow wrapping around the maze
+      const { x: mazeWidth, y: mazeHeight } = calculateMazeDimensions()
+
+      // If going right, should wrap to the same x position on the left side of the maze
+      if (direction === "right" && newX + ghostRadius > mazeWidth) {
+        newX = 0 + ghostRadius
+      }
+
+      // If going left, should wrap to the same x position on the right side of the maze
+      if (direction === "left" && newX - ghostRadius < 0) {
+        newX = mazeWidth - ghostRadius
+      }
+
+      // If going up, should wrap to the same y position on the bottom side of the maze
+      if (direction === "up" && newY - ghostRadius < 0) {
+        newY = mazeHeight - ghostRadius
+      }
+
+      // If going down, should wrap to the same y position on the top side of the maze
+      if (direction === "down" && newY + ghostRadius > mazeHeight) {
+        newY = 0 + ghostRadius
+      }
+
+      ghost.x = newX
+      ghost.y = newY
+      ghost.currentCell = {
+        x: Math.floor(newX / config.cellSize),
+        y: Math.floor(newY / config.cellSize),
+      }
+
+      if (
+        ghost.currentCell.x !== currentCell.x ||
+        ghost.currentCell.y !== currentCell.y
+      ) {
+        ghost.path = findPath(
+          { x: ghost.currentCell.x, y: ghost.currentCell.y },
+          {
+            x: state.pathman.currentCell?.x || 1,
+            y: state.pathman.currentCell?.y || 1,
+          },
+          config.maze.cells
+        )
+        // console.log(`ghost ${index} reset path`, ghost.path[0])
+      }
+
+      // Periodically or when Pathman moves, update the ghost's path
+      // if (shouldUpdatePath(ghost)) {
+      // const paths = getTopPaths(ghost, state.pathman, config.maze.cells, 3); // Get top 3 paths
+      // const chosenPath = paths[Math.floor(Math.random() * paths.length)]; // Randomly choose one
+      // ghost.path = chosenPath;
+
+      // Set the next direction based on the path
+      if (ghost.path?.length > 0) {
+        // const nextStep = ghost.path.shift() // Get the next step in the path
+        // ghost.direction = calculateDirection(ghost, nextStep) // Calculate the new direction based on the next step
+      }
+    })
   }
 
   const updatePellets = () => {
@@ -216,7 +475,6 @@ const game = (canvas: HTMLCanvasElement) => {
 
     // Toggle pause
     if (event.key === " ") {
-      console.log("Toggling pause...", state.phase)
       state.phase = state.phase === "paused" ? "playing" : "paused"
 
       if (state.phase === "paused") {
@@ -259,10 +517,10 @@ const game = (canvas: HTMLCanvasElement) => {
     }
 
     setTimeout(() => {
-      state.clickLocation = null
+      state.debug.clickLocation = null
     }, 4000)
 
-    state.clickLocation = clickLocation
+    state.debug.clickLocation = clickLocation
 
     const resetButton = {
       x: canvas.width - 120,
@@ -304,9 +562,12 @@ const game = (canvas: HTMLCanvasElement) => {
     const deltaTime = timestamp - state.previousAnimationTimestamp
 
     // Update stuff
-    updatePathman()
-    updatePellets()
-    updateStats(deltaTime)
+    if (state.phase === "playing") {
+      updatePathman()
+      updateGhosts()
+      updatePellets()
+      updateStats(deltaTime)
+    }
 
     // Draw stuff
     draw()
