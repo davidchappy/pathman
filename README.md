@@ -1,1 +1,1 @@
-# Pacman built with TypeScript, NextJS, and Yarn Workspaces
+# Pacman built with vanilla TypeScript

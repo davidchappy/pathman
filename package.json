@@ -5,19 +5,23 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "build": "next build",
-    "dev": "next dev",
-    "export": "next export",
-    "start": "next start",
+    "build": "rollup -c",
+    "dev": "concurrently \"nodemon\" \"npm start\"",
+    "start": "lite-server",
     "format": "npx prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\""
   },
   "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
     "@types/classnames": "^2.2.10",
     "@types/node": "^18.0.0",
-    "@types/react": "^18.0.14",
-    "typescript": "^4.0.2",
-    "next": "^13.5.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "concurrently": "^8.2.2",
+    "lite-server": "^2.6.1",
+    "nodemon": "^3.1.0",
+    "rollup": "^4.12.0",
+    "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "tslib": "^2.6.2"
   }
 }
