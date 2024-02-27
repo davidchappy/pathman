@@ -363,7 +363,7 @@ const createGame = (canvas: HTMLCanvasElement) => {
       })
 
       if (willColide) {
-        ghost.isMoving = false
+        // ghost.isMoving = false
         return
       }
 
