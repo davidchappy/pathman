@@ -349,6 +349,7 @@ const createGame = (canvas: HTMLCanvasElement) => {
         console.log(`ghost collided with pathman`)
         willColide = true
         state.phase = "game-over"
+        state.overlayText = config.overlayMessages.gameOver
       }
 
       const otherGhosts = ghosts.filter((g) => g.id !== ghost.id)
@@ -358,12 +359,12 @@ const createGame = (canvas: HTMLCanvasElement) => {
           adjacentCell?.y === otherGhost.currentCell!.y
         ) {
           console.log(`ghost collided with another ghost`)
-          willColide = true
+          // willColide = true
         }
       })
 
       if (willColide) {
-        // ghost.isMoving = false
+        ghost.isMoving = false
         return
       }
 
@@ -471,7 +472,24 @@ const createGame = (canvas: HTMLCanvasElement) => {
   }
 
   const handleKeyUp = (event: KeyboardEvent) => {
-    if (state.phase === "game-over" || state.phase === "game-won") return
+    // console.log("Key up", state.phase)
+    if (
+      state.phase === "intro" ||
+      state.phase === "game-over" ||
+      state.phase === "game-won"
+    ) {
+
+      // if (state.phase === "game-over" || state.phase === "game-won") {
+      //   reset()
+      //   state.phase = "playing"
+      //   return
+      // }
+
+      state.overlayText = ""
+      state.phase = "playing"
+      drawOverlay()
+      return
+    }
 
     // Toggle pause
     if (event.key === " ") {

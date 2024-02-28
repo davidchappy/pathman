@@ -21,8 +21,8 @@ export const getInitialState = (): GameState => {
     pellets,
     powerPellets,
     currentFPS: 0,
-    phase: "playing",
-    overlayText: "",
+    phase: "intro",
+    overlayText: "Welcome to Pathman! Press any key to Start.",
     debug: {
       clickLocation: null,
       currentPathmanPosition: null,

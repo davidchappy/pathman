@@ -100,7 +100,7 @@ export type GameState = {
   powerPellets: Entity[]
   previousAnimationTimestamp: number | undefined
   currentFPS: number
-  phase: "playing" | "game-over" | "game-won" | "paused"
+  phase: "playing" | "game-over" | "game-won" | "paused" | "intro"
   overlayText: string
   debug: {
     clickLocation: Entity | null
