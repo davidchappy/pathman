@@ -19,12 +19,27 @@ export type Node = {
   y: number
 }
 
+export type Point = Node & {}
+
 export type Cell = Node & {
   type?: CellType
+  point?: Point
+  entity?: Entity
+}
+
+export type MazeBlueprint = {
+  cells: CellType[][]
+  name: string
 }
 
 export type Maze = {
-  cells: CellType[][]
+  cells: Cell[][]
+  bounds: {
+    x: number
+    y: number
+    width: number
+    height: number
+  }
   name: string
 }
 
@@ -32,8 +47,6 @@ export type GameConfig = {
   debug: boolean
   pathman: {
     speed: number
-    startX: number
-    startY: number
     startDirection: Direction
     size: number
     mouthSpeed: number
@@ -63,13 +76,11 @@ export type GameConfig = {
     gameOver: string
     gameWon: string
   }
-  maze: Maze
+  maze: MazeBlueprint
   wallWidth: number
 }
 
-export type Entity = {
-  x: number // canvas x/y values
-  y: number // canvas x/y values
+export type Entity = Point & {
   currentCell?: Cell
   id?: number | string
   direction?: Direction
@@ -92,18 +103,48 @@ export type PathNode = Node & {
   parent?: PathNode
 }
 
+export type GamePhase = "playing" | "game-over" | "game-won" | "paused" | "intro"
+
 export type GameState = {
+  canvas: HTMLCanvasElement
   scale: number
   pathman: PathmanEntity
   ghosts: GhostEntity[]
   pellets: Entity[]
   powerPellets: Entity[]
   previousAnimationTimestamp: number | undefined
-  currentFPS: number
-  phase: "playing" | "game-over" | "game-won" | "paused" | "intro"
+  phase: GamePhase
   overlayText: string
   debug: {
+    currentFPS: number
     clickLocation: Entity | null
     currentPathmanPosition: Entity | null
-  }
+  },
+  maze: Maze
+}
+
+
+export type ActionType =
+  | "updatePathman"
+  | "updateGhosts"
+  | "updatePellets"
+  | "updatePhase"
+  | "updateOverlayText"
+  | "updateStats"
+  | "updateClickLocation"
+  | "updateMazePosition"
+  | "setPreviousAnimationTimestamp"
+  | "updateScale"
+  | "reset"
+  | "init"
+  | "updatePathmanMovement"
+
+export type Action = {
+  type: ActionType
+  payload?: any
+}
+
+export type UseStateReturnType = {
+  state: GameState
+  dispatch: (action: Action) => void
 }

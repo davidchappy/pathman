@@ -85,7 +85,7 @@ export const aStar = (
   return [] // No path found
 }
 
-function getShuffledNeighbors(node: PathNode, grid: Maze["cells"]) {
+const getShuffledNeighbors = (node: PathNode, grid: Maze["cells"]) => {
   const neighbors = getNeighbors(node, grid)
   // Shuffle the neighbors array
   for (let i = neighbors.length - 1; i > 0; i--) {
@@ -95,7 +95,7 @@ function getShuffledNeighbors(node: PathNode, grid: Maze["cells"]) {
   return neighbors
 }
 
-function getNeighbors(node: PathNode, grid: Maze["cells"]): PathNode[] {
+const getNeighbors = (node: PathNode, grid: Maze["cells"]): PathNode[] => {
   const neighbors: PathNode[] = []
   const directions = [
     [0, -1],
@@ -113,12 +113,12 @@ function getNeighbors(node: PathNode, grid: Maze["cells"]): PathNode[] {
       x < grid[0].length &&
       y >= 0 &&
       y < grid.length &&
-      grid[y][x] !== CellType.WallHorizontal &&
-      grid[y][x] !== CellType.WallVertical &&
-      grid[y][x] !== CellType.WallCornerTopLeft &&
-      grid[y][x] !== CellType.WallCornerTopRight &&
-      grid[y][x] !== CellType.WallCornerBottomLeft &&
-      grid[y][x] !== CellType.WallCornerBottomRight &&
+      grid[y][x].type !== CellType.WallHorizontal &&
+      grid[y][x].type !== CellType.WallVertical &&
+      grid[y][x].type !== CellType.WallCornerTopLeft &&
+      grid[y][x].type !== CellType.WallCornerTopRight &&
+      grid[y][x].type !== CellType.WallCornerBottomLeft &&
+      grid[y][x].type !== CellType.WallCornerBottomRight &&
       !neighbors.some((neighbor) => neighbor.x === x && neighbor.y === y) &&
       !(node.x === x && node.y === y)
     ) {

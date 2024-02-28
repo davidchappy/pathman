@@ -1,6 +1,6 @@
-import { CellType, Maze } from "./types"
+import { CellType, MazeBlueprint } from "./types"
 
-export const defaultMaze: Maze = {
+export const paths: MazeBlueprint = {
   cells: [
     [5, 3, 3, 3, 3, 6, 5, 3, 6, 5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 6, 5, 3, 3, 3, 3, 3, 3, 3, 5, 3, 3, 3, 3, 6],
     [4, 2, 1, 1, 1, 4, 4, 1, 7, 8, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 7, 8, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 4],
@@ -22,3 +22,9 @@ export const defaultMaze: Maze = {
   ] as CellType[][],
   name: "default",
 }
+
+const mazes: { [key: string]: MazeBlueprint } = {
+  paths,
+}
+
+export default mazes

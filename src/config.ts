@@ -1,12 +1,9 @@
-import { defaultMaze } from "./mazes"
+import { paths } from "./mazes"
 import { GameConfig } from "./types"
 
 const config: GameConfig = {
-  debug: false,
   pathman: {
     speed: 1.5,
-    startX: 30,
-    startY: 30,
     startDirection: "none",
     size: 18,
     mouthSpeed: 0.1,
@@ -36,8 +33,9 @@ const config: GameConfig = {
     gameOver: "Game over. Refresh to play again.",
     gameWon: "You won! Refresh to play again.",
   },
-  maze: defaultMaze,
+  maze: paths,
   wallWidth: 2,
+  debug: false,
 }
 
 export default config

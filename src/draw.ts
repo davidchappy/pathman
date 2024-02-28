@@ -3,15 +3,14 @@ import config from "./config"
 
 const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
   const ctx = canvas.getContext("2d")!
-
   const backgroundCanvas = document.createElement("canvas")
-  backgroundCanvas.width = canvas.width
-  backgroundCanvas.height = canvas.height
-  const backgroundCtx = backgroundCanvas.getContext("2d")!
-
   let mazePosition = { x: 0, y: 0, width: 0, height: 0 }
 
   const drawBackground = () => {
+    backgroundCanvas.width = canvas.width
+    backgroundCanvas.height = canvas.height
+    const backgroundCtx = backgroundCanvas.getContext("2d")!
+
     backgroundCtx.fillStyle = config.colors.background
     ctx.fillRect(
       0,
@@ -21,11 +20,11 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
     )
   }
 
-  const calculateMazePosition = () => {
+  const updateMazePosition = () => {
     const mazeWidth = config.maze.cells[0].length * config.cellSize
     const mazeHeight = config.maze.cells.length * config.cellSize
 
-    return {
+    mazePosition = {
       x: canvas.width / 2 - mazeWidth / 2,
       y: canvas.height / 2 - mazeHeight / 2,
       width: mazeWidth,
@@ -33,13 +32,9 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
     }
   }
 
-  mazePosition = calculateMazePosition()
-
-  window.addEventListener("resize", () => {
-    mazePosition = calculateMazePosition()
-  })
-
   const drawMaze = () => {
+    updateMazePosition()
+
     const cellSize = config.cellSize
 
     const cells = config.maze.cells
@@ -218,7 +213,7 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
     const textY = boxY + (boxHeight - 50) / 2
 
     ctx.textAlign = "left"
-    ctx.fillText(`FPS: ${state.currentFPS.toFixed(0)}`, textX, textY)
+    ctx.fillText(`FPS: ${state.debug.currentFPS.toFixed(0)}`, textX, textY)
     ctx.fillText(
       `Pellets: ${state.pellets.length}`,
       textX,
@@ -441,6 +436,7 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
     drawStats,
     drawMaze,
     drawBackground,
+    updateMazePosition
   }
 }
 
