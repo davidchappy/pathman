@@ -1,6 +1,17 @@
-import { CellType, Maze, PathNode, Node } from "./types"
+import { CellType, Entity, Maze, PathNode, Node, GameState } from "./types"
 
-export const aStar = (
+export const findPath = (entity: Entity, target: Entity, grid: Maze["cells"]) =>
+  aStar(
+    { x: entity.currentCell!.x, y: entity.currentCell!.y },
+    {
+      x: target.currentCell!.x || 1,
+      y: target.currentCell!.y || 1,
+    },
+    grid,
+    true
+  )
+
+const aStar = (
   startPos: Node,
   targetPos: Node,
   grid: Maze["cells"],
@@ -43,9 +54,11 @@ export const aStar = (
       return path.reverse()
     }
 
-    const neighbors = randomize
-      ? getShuffledNeighbors(currentNode, grid)
-      : getNeighbors(currentNode, grid)
+    // const neighbors = randomize
+    //   ? getShuffledNeighbors(currentNode, grid)
+    //   : getNeighbors(currentNode, grid)
+
+    const neighbors = getNeighbors(currentNode, grid)
 
     for (const neighbor of neighbors) {
       if (
@@ -74,7 +87,9 @@ export const aStar = (
         if (
           !openSet.some(
             (node) => node.x === neighbor.x && node.y === neighbor.y
-          )
+          ) && randomize
+            ? Math.random() < 0.95
+            : true // Randomly add neighbors to openSet
         ) {
           openSet.push(neighbor)
         }
@@ -88,9 +103,11 @@ export const aStar = (
 const getShuffledNeighbors = (node: PathNode, grid: Maze["cells"]) => {
   const neighbors = getNeighbors(node, grid)
   // Shuffle the neighbors array
+
   for (let i = neighbors.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
-    ;[neighbors[i], neighbors[j]] = [neighbors[j], neighbors[i]]
+    // swap elements i and j
+    neighbors[i] = neighbors.splice(j, 1, neighbors[i])[0]
   }
   return neighbors
 }

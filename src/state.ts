@@ -17,7 +17,7 @@ import {
   Action,
 } from "./types"
 import config from "./config"
-import { aStar as findPath } from "./pathfinding"
+import { findPath } from "./pathfinding"
 
 const getInitialState = (canvas: HTMLCanvasElement): GameState => {
   const maze = createMaze()
@@ -202,6 +202,7 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
     if (!state.pathman.currentCell) return
 
     ghosts.forEach((ghost, index) => {
+      ghost.isMoving = true
       // First, find the cell that ghost is in currently
       const cellX = Math.floor(ghost.x / config.cellSize)
       const cellY = Math.floor(ghost.y / config.cellSize)
@@ -209,14 +210,7 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
       ghost.currentCell = currentCell
 
       if (ghost.path.length === 0) {
-        ghost.path = findPath(
-          { x: ghost.currentCell.x, y: ghost.currentCell.y },
-          {
-            x: state.pathman.currentCell!.x || 1,
-            y: state.pathman.currentCell!.y || 1,
-          },
-          state.maze.cells
-        )
+        ghost.path = findPath(ghost, state.pathman, state.maze.cells)
       }
 
       // Move
@@ -383,12 +377,18 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
           adjacentCell?.y === otherGhost.currentCell!.y
         ) {
           console.log(`ghost collided with another ghost`)
-          // willColide = true
+          willColide = true
         }
       })
 
       if (willColide) {
         ghost.isMoving = false
+        // reset path
+        ghost.path = findPath(
+          ghost,
+          state.pathman,
+          state.maze.cells,
+        )
         return
       }
 
@@ -415,11 +415,14 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
         newY = 0 + ghostRadius
       }
 
-      ghost.x = newX
-      ghost.y = newY
-      ghost.currentCell = {
-        x: Math.floor(newX / config.cellSize),
-        y: Math.floor(newY / config.cellSize),
+      // Here's where we actually move the ghost
+      if (ghost.isMoving) {
+        ghost.x = newX
+        ghost.y = newY
+        ghost.currentCell = {
+          x: Math.floor(newX / config.cellSize),
+          y: Math.floor(newY / config.cellSize),
+        }
       }
 
       if (
@@ -427,12 +430,9 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
         ghost.currentCell.y !== currentCell.y
       ) {
         ghost.path = findPath(
-          { x: ghost.currentCell.x, y: ghost.currentCell.y },
-          {
-            x: state.pathman.currentCell?.x || 1,
-            y: state.pathman.currentCell?.y || 1,
-          },
-          state.maze.cells
+          ghost,
+          state.pathman,
+          state.maze.cells,
         )
         // console.log(`ghost ${index} reset path`, ghost.path[0])
       }

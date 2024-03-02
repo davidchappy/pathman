@@ -1,9 +1,5 @@
-import type { GameState, Direction } from "./types"
-import { CellType, Entity, PathNode, Node } from "./types"
-import config from "./config"
 import useState from "./state"
 import useDraw from "./draw"
-import { aStar as findPath } from "./pathfinding"
 import useEvents from "./events"
 
 const createGame = (canvas: HTMLCanvasElement) => {
