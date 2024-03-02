@@ -25,6 +25,18 @@ const createGame = (canvas: HTMLCanvasElement) => {
     dispatch({ type: "updateScale" })
   }
 
+  const update = () => {
+    // Update stuff
+    if (state.phase === "playing") {
+      dispatch({ type: "updatePathman" })
+      dispatch({ type: "updateGhosts" })
+      dispatch({ type: "updatePellets" })
+    }
+  }
+
+  // const updateInterval = setInterval(update, config.gameUpdateInterval.rate)
+  // dispatch({ type: "setUpdateInterval", payload: updateInterval })
+
   const animate = (timestamp: number) => {
     // Initialize the previous timestamp
     if (state.previousAnimationTimestamp === undefined) {
@@ -34,16 +46,10 @@ const createGame = (canvas: HTMLCanvasElement) => {
     }
 
     const deltaTime = timestamp - state.previousAnimationTimestamp
+    dispatch({ type: "updateStats", payload: deltaTime })
 
-    // Update stuff
-    if (state.phase === "playing") {
-      dispatch({ type: "updatePathman" })
-      dispatch({ type: "updateGhosts" })
-      dispatch({ type: "updatePellets" })
-      dispatch({ type: "updateStats", payload: deltaTime })
-    }
+    update()
 
-    // Draw stuff
     draw()
 
     dispatch({ type: "setPreviousAnimationTimestamp", payload: timestamp })
