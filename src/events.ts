@@ -3,14 +3,13 @@ import config from "./config"
 
 type EventHandlers = {
   onClickReset: () => void
-  onRedrawOverlay: () => void
   onRestartAnimation: () => void
 }
 
 const useEvents = (
   state: GameState,
   dispatch: (action: Action) => void,
-  { onClickReset, onRedrawOverlay, onRestartAnimation }: EventHandlers
+  { onClickReset, onRestartAnimation }: EventHandlers
 ) => {
   const canvas = state.canvas
 
@@ -21,7 +20,6 @@ const useEvents = (
   const onStartPlaying = () => {
     dispatch({ type: "updateOverlayText", payload: "" })
     dispatch({ type: "updatePhase", payload: "playing" })
-    onRedrawOverlay()
   }
   const onTogglePause = () => {
     dispatch({
@@ -34,13 +32,11 @@ const useEvents = (
         type: "updateOverlayText",
         payload: config.overlayMessages.paused,
       })
-      onRedrawOverlay()
     } else {
       dispatch({ type: "updateOverlayText", payload: "" })
       // If unpausing, re-start the animation loop
       onRestartAnimation()
     }
-    onRedrawOverlay()
   }
 
   const handleResize = () => {

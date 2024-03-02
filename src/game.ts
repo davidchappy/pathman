@@ -5,13 +5,12 @@ import useEvents from "./events"
 const createGame = (canvas: HTMLCanvasElement) => {
   // let state: GameState = getInitialState(canvas)
   const { state, dispatch } = useState(canvas)
-  const { draw, drawOverlay } = useDraw(canvas, state)
+  const { draw } = useDraw(canvas, state)
   const { attachEvents, detachEvents, triggerResize } = useEvents(
     state,
     dispatch,
     {
       onClickReset: () => reset(),
-      onRedrawOverlay: () => drawOverlay(),
       onRestartAnimation: () => requestAnimationFrame(animate),
     }
   )
@@ -19,9 +18,12 @@ const createGame = (canvas: HTMLCanvasElement) => {
   const init = () => {
     dispatch({ type: "init" })
     dispatch({ type: "updateScale" })
+    dispatch({ type: "updateMazePosition" })
   }
 
   const update = () => {
+    dispatch({ type: "updateMazePosition" })
+
     // Update stuff
     if (state.phase === "playing") {
       dispatch({ type: "updatePathman" })

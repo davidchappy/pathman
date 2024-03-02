@@ -4,7 +4,6 @@ import config from "./config"
 const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
   const ctx = canvas.getContext("2d")!
   const backgroundCanvas = document.createElement("canvas")
-  let mazePosition = { x: 0, y: 0, width: 0, height: 0 }
 
   const drawBackground = () => {
     backgroundCanvas.width = canvas.width
@@ -20,24 +19,11 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
     )
   }
 
-  const updateMazePosition = () => {
-    const mazeWidth = config.maze.cells[0].length * config.cellSize
-    const mazeHeight = config.maze.cells.length * config.cellSize
-
-    mazePosition = {
-      x: canvas.width / 2 - mazeWidth / 2,
-      y: canvas.height / 2 - mazeHeight / 2,
-      width: mazeWidth,
-      height: mazeHeight,
-    }
-  }
-
   const drawMaze = () => {
-    updateMazePosition()
-
     const cellSize = config.cellSize
 
     const cells = config.maze.cells
+    const mazePosition = state.maze.bounds
 
     ctx.save()
     ctx.translate(mazePosition.x, mazePosition.y)
@@ -145,6 +131,7 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
 
   const drawRulers = () => {
     const padding = config.cellSize
+    const mazePosition = state.maze.bounds
 
     ctx.save()
     ctx.translate(mazePosition.x - padding, mazePosition.y - padding)
@@ -186,6 +173,7 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
   }
 
   const drawEntityRelativeToMaze = (drawFunction: () => void) => {
+    const mazePosition = state.maze.bounds
     ctx.save()
     ctx.translate(mazePosition.x, mazePosition.y)
     drawFunction()
@@ -413,30 +401,20 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
     drawMaze()
     if (config.debug) {
       drawRulers()
+      drawCurrentPathmanCell()
+      drawClickLocation()
     }
     drawStats()
     drawPathman()
     drawPellets()
     drawGhosts()
     drawOverlay()
-    // drawCurrentPathmanCell()
-    // drawClickLocation()
 
     ctx.restore()
   }
 
   return {
-    draw,
-    drawCurrentPathmanCell,
-    drawClickLocation,
-    drawOverlay,
-    drawGhosts,
-    drawPellets,
-    drawPathman,
-    drawStats,
-    drawMaze,
-    drawBackground,
-    updateMazePosition
+    draw
   }
 }
 

@@ -34,6 +34,7 @@ const config: GameConfig = {
     gameWon: "You won! Refresh to play again.",
   },
   maze: paths,
+  screenPadding: 20,
   wallWidth: 2,
   debug: false,
 }

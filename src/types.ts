@@ -70,6 +70,7 @@ export type GameConfig = {
     size: number
   }
   cellSize: number
+  screenPadding: number
   sidebarWidth: number
   overlayMessages: {
     paused: string
