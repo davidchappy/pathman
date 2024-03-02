@@ -28,9 +28,14 @@ const getInitialState = (canvas: HTMLCanvasElement): GameState => {
 
   return {
     canvas,
+    score: {
+      score: 0,
+      livesFlashOn: true,
+    },
     maze,
     pellets,
     powerPellets,
+    powerPelletRemainingTime: 0,
     pathman,
     ghosts,
     phase: "intro",
@@ -81,16 +86,16 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
     let newY = state.pathman.y
 
     if (state.pathman.direction === "right") {
-      newX += config.pathman.speed
+      newX += state.pathman.speed
     }
     if (state.pathman.direction === "left") {
-      newX -= config.pathman.speed
+      newX -= state.pathman.speed
     }
     if (state.pathman.direction === "up") {
-      newY -= config.pathman.speed
+      newY -= state.pathman.speed
     }
     if (state.pathman.direction === "down") {
-      newY += config.pathman.speed
+      newY += state.pathman.speed
     }
 
     const pathmanRadius = config.pathman.size / 2
@@ -101,7 +106,6 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
     state.debug.currentPathmanPosition = {
       x: state.pathman.x,
       y: state.pathman.y,
-      currentCell,
     }
 
     const direction = state.pathman.direction
@@ -203,6 +207,10 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
 
     ghosts.forEach((ghost, index) => {
       ghost.isMoving = true
+      ghost.speed =
+        state.powerPelletRemainingTime > 0
+          ? config.ghosts.speed * 0.9
+          : config.ghosts.speed
       // First, find the cell that ghost is in currently
       const cellX = Math.floor(ghost.x / config.cellSize)
       const cellY = Math.floor(ghost.y / config.cellSize)
@@ -210,7 +218,7 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
       ghost.currentCell = currentCell
 
       if (ghost.path.length === 0) {
-        ghost.path = findPath(ghost, state.pathman, state.maze.cells)
+        ghost.path = findPath(ghost, state)
       }
 
       // Move
@@ -364,10 +372,34 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
         adjacentCell?.x === state.pathman.currentCell?.x &&
         adjacentCell?.y === state.pathman.currentCell?.y
       ) {
-        console.log(`ghost collided with pathman`)
+        if (state.powerPelletRemainingTime > 0) {
+          // Ghost is eaten
+          ghost.x = ghost.startPoint.x
+          ghost.y = ghost.startPoint.y
+          ghost.currentCell = {
+            x: Math.floor(ghost.x / config.cellSize),
+            y: Math.floor(ghost.y / config.cellSize),
+          }
+          ghost.path = findPath(ghost, state)
+
+          ghost.isMoving = false
+          state.score.score += 100
+
+          return
+        }
         willColide = true
-        state.phase = "game-over"
-        state.overlayText = config.overlayMessages.gameOver
+        if (state.pathman.extraLives > 0) {
+          state.pathman.extraLives--
+          state.pathman.x = state.pathman.startPoint.x
+          state.pathman.y = state.pathman.startPoint.y
+          state.pathman.currentCell = {
+            x: Math.floor(state.pathman.x / config.cellSize),
+            y: Math.floor(state.pathman.y / config.cellSize),
+          }
+        } else {
+          state.phase = "game-over"
+          state.overlayText = config.overlayMessages.gameOver
+        }
       }
 
       const otherGhosts = ghosts.filter((g) => g.id !== ghost.id)
@@ -384,11 +416,7 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
       if (willColide) {
         ghost.isMoving = false
         // reset path
-        ghost.path = findPath(
-          ghost,
-          state.pathman,
-          state.maze.cells,
-        )
+        ghost.path = findPath(ghost, state)
         return
       }
 
@@ -429,12 +457,7 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
         ghost.currentCell.x !== currentCell.x ||
         ghost.currentCell.y !== currentCell.y
       ) {
-        ghost.path = findPath(
-          ghost,
-          state.pathman,
-          state.maze.cells,
-        )
-        // console.log(`ghost ${index} reset path`, ghost.path[0])
+        ghost.path = findPath(ghost, state)
       }
 
       // Periodically or when Pathman moves, update the ghost's path
@@ -469,12 +492,22 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
 
       if (distance < pathmanRadius + config.pellets.size) {
         state.pellets.splice(i, 1)
+        state.score.score += 10
         i--
       }
     }
 
+    const lastAnimation = state.previousAnimationTimestamp
+
     for (let i = 0; i < state.powerPellets.length; i++) {
       const pellet = state.powerPellets[i]
+
+      if (lastAnimation && lastAnimation % 300 < 150) {
+        pellet.flashOn = false
+      } else {
+        pellet.flashOn = true
+      }
+
       const distance = Math.sqrt(
         Math.pow(state.pathman.x - pellet.x, 2) +
           Math.pow(state.pathman.y - pellet.y, 2)
@@ -482,8 +515,19 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
 
       if (distance < pathmanRadius + config.powerPellets.size) {
         state.powerPellets.splice(i, 1)
+        state.score.score += 50
+        state.powerPelletRemainingTime = config.powerPellets.activeDuration
         i--
       }
+    }
+  }
+
+  const updateActivePowerPellet = () => {
+    if (state.powerPelletRemainingTime > 0) {
+      state.pathman.speed = config.pathman.speed * 1.2
+      state.powerPelletRemainingTime -= 1000 / 60
+    } else {
+      state.pathman.speed = config.pathman.speed
     }
   }
 
@@ -503,6 +547,14 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
 
   const updateStats = (deltaTime: number) => {
     state.debug.currentFPS = 1000 / deltaTime
+    state.score.livesFlashOn = state.previousAnimationTimestamp! % 500 < 250
+    if (
+      state.score.score >= config.scoreToExtraLife &&
+      state.score.score % config.scoreToExtraLife === 0
+    ) {
+      state.pathman.extraLives++
+      state.score.score += 10
+    }
   }
 
   const calculateScale = () => {
@@ -530,8 +582,19 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
       case "updatePellets":
         updatePellets()
         break
+      case "updateActivePowerPellet":
+        updateActivePowerPellet()
+        break
       case "updatePhase":
-        state.phase = action.payload
+        if (action.payload) {
+          state.phase = action.payload
+        } else {
+          if (state.pellets.length === 0 && state.powerPellets.length === 0) {
+            state.phase = "game-won"
+            state.overlayText = config.overlayMessages.gameWon
+          }
+        }
+
         break
       case "updateOverlayText":
         state.overlayText = action.payload

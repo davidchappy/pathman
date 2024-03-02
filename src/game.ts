@@ -29,6 +29,7 @@ const createGame = (canvas: HTMLCanvasElement) => {
       dispatch({ type: "updatePathman" })
       dispatch({ type: "updateGhosts" })
       dispatch({ type: "updatePellets" })
+      dispatch({ type: "updateActivePowerPellet" })
     }
   }
 

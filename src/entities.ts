@@ -1,5 +1,11 @@
 import config from "./config"
-import { CellType, Entity, PathmanEntity, GhostEntity, Cell } from "./types"
+import {
+  CellType,
+  Entity,
+  PathmanEntity,
+  GhostEntity,
+  PowerPelletEntity,
+} from "./types"
 
 const createEntities = (
   type: CellType,
@@ -13,7 +19,13 @@ const createEntities = (
         const entityX = x * config.cellSize + config.cellSize / 2
         const entityY = y * config.cellSize + config.cellSize / 2
         const currentCell = { x, y }
-        entities.push({ x: entityX, y: entityY, currentCell, ...attributes })
+        entities.push({
+          x: entityX,
+          y: entityY,
+          currentCell,
+          startPoint: { x: entityX, y: entityY },
+          ...attributes,
+        })
       }
     })
   })
@@ -22,8 +34,12 @@ const createEntities = (
 }
 
 export const createPellets = (): Entity[] => createEntities(CellType.Pellet)
-export const createPowerPellets = (): Entity[] =>
-  createEntities(CellType.PowerPellet)
+export const createPowerPellets = (): PowerPelletEntity[] =>
+  createEntities(CellType.PowerPellet).map((entity) => ({
+    ...entity,
+    flashOn: true,
+  }))
+
 export const createGhosts = (): GhostEntity[] => {
   const attributes: Partial<Entity> = { direction: "none", isMoving: false }
   return createEntities(CellType.Ghost, attributes).map((entity, index) => {
@@ -31,6 +47,7 @@ export const createGhosts = (): GhostEntity[] => {
       id: `ghost-${index}`,
       ...entity,
       path: [],
+      speed: config.ghosts.speed,
     }
   })
 }
@@ -44,5 +61,7 @@ export const createPathman = (): PathmanEntity => {
     ...entity,
     mouthOpening: false,
     mouthAngle: 0,
+    speed: config.pathman.speed,
+    extraLives: config.pathman.startingLives,
   }
 }

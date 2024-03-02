@@ -23,8 +23,19 @@ export const paths: MazeBlueprint = {
   name: "default",
 }
 
+export const small: MazeBlueprint = {
+  cells: [
+    [5, 3, 3, 3, 6],
+    [4, 1, 1, 1, 4],
+    [4, 1, 5, 6, 4],
+  ] as CellType[][],
+  name: "small",
+}
+
+
 const mazes: { [key: string]: MazeBlueprint } = {
   paths,
+  small
 }
 
 export default mazes

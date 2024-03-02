@@ -1,13 +1,14 @@
-import { paths } from "./mazes"
+import { paths, small } from "./mazes"
 import { GameConfig } from "./types"
 
 const config: GameConfig = {
   pathman: {
-    speed: 1.5,
+    speed: 1.2,
     startDirection: "none",
     size: 18,
     mouthSpeed: 0.1,
     maxLowestAngle: -0.6,
+    startingLives: 1
   },
   ghosts: {
     speed: 1,
@@ -26,6 +27,7 @@ const config: GameConfig = {
   },
   powerPellets: {
     size: 6,
+    activeDuration: 10000,
   },
   sidebarWidth: 120,
   overlayMessages: {
@@ -37,6 +39,7 @@ const config: GameConfig = {
   screenPadding: 20,
   wallWidth: 2,
   debug: false,
+  scoreToExtraLife: 2500,
 }
 
 export default config

@@ -51,6 +51,7 @@ export type GameConfig = {
     size: number
     mouthSpeed: number
     maxLowestAngle: number
+    startingLives: number
   }
   ghosts: {
     speed: number
@@ -68,6 +69,7 @@ export type GameConfig = {
   }
   powerPellets: {
     size: number
+    activeDuration: number
   }
   cellSize: number
   screenPadding: number
@@ -79,6 +81,7 @@ export type GameConfig = {
   }
   maze: MazeBlueprint
   wallWidth: number
+  scoreToExtraLife: number
 }
 
 export type Entity = Point & {
@@ -86,15 +89,23 @@ export type Entity = Point & {
   id?: number | string
   direction?: Direction
   isMoving?: boolean
+  startPoint: Point
+}
+
+export type PowerPelletEntity = Entity & {
+  flashOn: boolean
 }
 
 export type PathmanEntity = Entity & {
   mouthOpening: boolean
   mouthAngle: number
+  speed: number
+  extraLives: number
 }
 
 export type GhostEntity = Entity & {
   path: PathNode[]
+  speed: number
 }
 
 export type PathNode = Node & {
@@ -106,20 +117,27 @@ export type PathNode = Node & {
 
 export type GamePhase = "playing" | "game-over" | "game-won" | "paused" | "intro"
 
+export type GameScore = {
+  score: number
+  livesFlashOn: boolean
+}
+
 export type GameState = {
   canvas: HTMLCanvasElement
+  score: GameScore
   scale: number
   pathman: PathmanEntity
   ghosts: GhostEntity[]
   pellets: Entity[]
-  powerPellets: Entity[]
+  powerPellets: PowerPelletEntity[]
+  powerPelletRemainingTime: number
   previousAnimationTimestamp: number | undefined
   phase: GamePhase
   overlayText: string
   debug: {
     currentFPS: number
-    clickLocation: Entity | null
-    currentPathmanPosition: Entity | null
+    clickLocation: Point | null
+    currentPathmanPosition: Point | null
   },
   maze: Maze
 }
@@ -129,6 +147,7 @@ export type ActionType =
   | "updatePathman"
   | "updateGhosts"
   | "updatePellets"
+  | "updateActivePowerPellet"
   | "updatePhase"
   | "updateOverlayText"
   | "updateStats"

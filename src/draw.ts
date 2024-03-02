@@ -1,4 +1,4 @@
-import { GameState, CellType } from "./types"
+import { GameState, CellType, PathmanEntity, Point } from "./types"
 import config from "./config"
 
 const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
@@ -180,12 +180,30 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
     ctx.restore()
   }
 
+  const drawScoreboard = () => {
+    // Draw the scoreboard at the upper left corner of the maze in white letters
+    // Include score and remaining pathman lives
+    ctx.font = "20px Monospace"
+
+    // ctx.fillStyle = state.score.livesFlashOn ? "white" : "transparent"
+    // const livesX = state.maze.bounds.x + 10
+    // const liveY = state.maze.bounds.y - 40
+
+    // ctx.fillText(`${state.pathman.extraLives}UP`, livesX, liveY)
+
+    ctx.fillStyle = "white"
+    const scoreX = state.maze.bounds.x + 10
+    const scoreY = state.maze.bounds.y - 15
+
+    ctx.fillText(`${state.score.score.toFixed(0)}`, scoreX, scoreY)
+  }
+
   const drawStats = () => {
-    const boxPadding = 10
+    const boxPadding = 20
 
     // Box dimensions and position
-    const boxWidth = config.sidebarWidth - boxPadding
-    const boxHeight = config.sidebarWidth - boxPadding
+    const boxWidth = config.sidebarWidth - boxPadding + 20
+    const boxHeight = config.sidebarWidth - boxPadding + 40
     const boxX = ctx.canvas.width - boxWidth - boxPadding
     const boxY = boxPadding
 
@@ -198,31 +216,49 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
     ctx.lineWidth = 2
 
     const textX = boxX + boxPadding
-    const textY = boxY + (boxHeight - 50) / 2
+    const textY = boxY + boxPadding
 
     ctx.textAlign = "left"
     ctx.fillText(`FPS: ${state.debug.currentFPS.toFixed(0)}`, textX, textY)
     ctx.fillText(
       `Pellets: ${state.pellets.length}`,
       textX,
+      textY + boxPadding * 1
+    )
+    ctx.fillText(
+      `Power: ${state.powerPelletRemainingTime.toFixed(0)}`,
+      textX,
       textY + boxPadding * 2
+    )
+    ctx.fillText(
+      `Score: ${state.score.score.toFixed(0)}`,
+      textX,
+      textY + boxPadding * 3
     )
 
     // Add reset button
-    const buttonX = boxX + boxPadding
-    const buttonY = textY + (boxPadding * 2 + 20)
-    const buttonWidth = boxWidth - boxPadding * 2
-    const buttonHeight = 30
-    ctx.fillStyle = config.colors.primary
-    ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight)
-    ctx.fillStyle = config.colors.secondaryText
+    // const buttonX = boxX + boxPadding
+    // const buttonY = textY + (boxPadding * 4)
+    // const buttonWidth = boxWidth - boxPadding * 2
+    // const buttonHeight = 30
+    // ctx.fillStyle = config.colors.primary
+    // ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight)
+    // ctx.fillStyle = config.colors.secondaryText
 
-    ctx.fillText("Reset", buttonX + boxPadding, buttonY + boxPadding * 2)
+    // ctx.fillText("Reset", buttonX + boxPadding, buttonY + boxPadding)
   }
 
-  const drawPathman = () => {
+  const drawPathman = (pathman?: PathmanEntity) => {
     drawEntityRelativeToMaze(() => {
-      const { x, y, mouthAngle, direction } = state.pathman
+      let { x, y, mouthAngle, direction } = state.pathman
+
+      if (pathman) {
+        x = pathman.x
+        y = pathman.y
+        direction = "left"
+        mouthAngle = pathman.mouthAngle
+      }
+
       const { size } = config.pathman
 
       const radius = size / 2
@@ -285,7 +321,7 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
           Math.PI * 2,
           true
         )
-        ctx.fillStyle = config.colors.primary
+        ctx.fillStyle = pellet.flashOn ? config.colors.primary : "transparent"
         ctx.fill()
       }
     })
@@ -297,10 +333,20 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
       const radius = size / 2
 
       const colors = ["red", "blue", "pink", "orange"]
+      const powerColor = "lightgray"
+      const powerIsActive = state.powerPelletRemainingTime > 0
+      const powerIsFlashing = state.powerPelletRemainingTime <= 3000
+      const lastAnimation = state.previousAnimationTimestamp!
 
       state.ghosts.forEach((ghost, index) => {
         // REturn index to 0 if it's greater than 3
-        const color = colors[index % colors.length]
+        let color = colors[index % colors.length]
+
+        if (powerIsActive) {
+          color =
+            powerIsFlashing && lastAnimation % 500 < 250 ? color : powerColor
+        }
+
         ctx.fillStyle = color
 
         ctx.beginPath()
@@ -354,6 +400,31 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
     })
   }
 
+  const drawFooter = () => {
+    // Draw a pathman icon for each extra life in the lower left of the maze
+    const livesX = 20
+    const livesY = state.maze.bounds.height + 20
+    const livesPadding = 30
+
+    for (let i = 0; i < state.pathman.extraLives; i++) {
+      const position: Point = {
+        x: livesX + i * livesPadding,
+        y: livesY,
+      }
+
+      drawPathman({
+        startPoint: position,
+        x: position.x,
+        y: position.y,
+        mouthAngle: -0.5,
+        direction: "left",
+        mouthOpening: false,
+        speed: 0,
+        extraLives: 0,
+      })
+    }
+  }
+
   const drawOverlay = () => {
     if (state.phase === "playing") return
 
@@ -402,19 +473,21 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
     if (config.debug) {
       drawRulers()
       drawCurrentPathmanCell()
+      drawStats()
       drawClickLocation()
     }
-    drawStats()
     drawPathman()
     drawPellets()
     drawGhosts()
+    drawScoreboard()
+    drawFooter()
     drawOverlay()
 
     ctx.restore()
   }
 
   return {
-    draw
+    draw,
   }
 }
 

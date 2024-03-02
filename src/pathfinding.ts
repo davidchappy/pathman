@@ -1,21 +1,28 @@
 import { CellType, Entity, Maze, PathNode, Node, GameState } from "./types"
 
-export const findPath = (entity: Entity, target: Entity, grid: Maze["cells"]) =>
-  aStar(
+export const findPath = (entity: Entity, state: GameState) => {
+  const target = state.pathman
+  const grid = state.maze.cells
+  const reverse = state.powerPelletRemainingTime > 0
+
+  return aStar(
     { x: entity.currentCell!.x, y: entity.currentCell!.y },
     {
       x: target.currentCell!.x || 1,
       y: target.currentCell!.y || 1,
     },
     grid,
-    true
+    true,
+    reverse
   )
+}
 
 const aStar = (
   startPos: Node,
   targetPos: Node,
   grid: Maze["cells"],
-  randomize = true
+  randomize = true,
+  reverse = false
 ) => {
   const openSet: PathNode[] = []
   const closedSet: PathNode[] = []
@@ -33,10 +40,13 @@ const aStar = (
   while (openSet.length > 0) {
     let currentNode = openSet[0]
     openSet.forEach((node: PathNode) => {
-      if (
-        node.fCost < currentNode.fCost ||
-        (node.fCost === currentNode.fCost && node.hCost < currentNode.hCost)
-      ) {
+      const isMostOptimal = reverse
+        ? node.fCost > currentNode.fCost ||
+          (node.fCost === currentNode.fCost && node.hCost > currentNode.hCost)
+        : node.fCost < currentNode.fCost ||
+          (node.fCost === currentNode.fCost && node.hCost < currentNode.hCost)
+
+      if (isMostOptimal) {
         currentNode = node
       }
     })
@@ -54,11 +64,11 @@ const aStar = (
       return path.reverse()
     }
 
-    // const neighbors = randomize
-    //   ? getShuffledNeighbors(currentNode, grid)
-    //   : getNeighbors(currentNode, grid)
+    const neighbors = randomize
+      ? getShuffledNeighbors(currentNode, grid)
+      : getNeighbors(currentNode, grid)
 
-    const neighbors = getNeighbors(currentNode, grid)
+    // const neighbors = getNeighbors(currentNode, grid)
 
     for (const neighbor of neighbors) {
       if (
