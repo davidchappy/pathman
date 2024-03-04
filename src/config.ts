@@ -31,9 +31,12 @@ const config: GameConfig = {
   },
   sidebarWidth: 120,
   overlayMessages: {
+    playing: "",
     paused: "Paused. Press spacebar to continue.",
     gameOver: "Game over. Refresh to play again.",
     gameWon: "You won! Refresh to play again.",
+    intro: "Press any key to start",
+    orientation: "Please rotate your device"
   },
   maze: paths,
   screenPadding: 20,

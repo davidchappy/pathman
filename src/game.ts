@@ -12,13 +12,15 @@ const createGame = (canvas: HTMLCanvasElement) => {
     {
       onClickReset: () => reset(),
       onRestartAnimation: () => requestAnimationFrame(animate),
+      draw,
     }
   )
 
   const init = () => {
-    dispatch({ type: "init" })
-    dispatch({ type: "updateScale" })
+    dispatch({ type: "resize" })
+    // dispatch({ type: "updateScale" })
     dispatch({ type: "updateMazePosition" })
+    dispatch({ type: "checkOrientation" })
   }
 
   const update = () => {

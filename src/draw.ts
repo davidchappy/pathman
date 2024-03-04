@@ -3,19 +3,19 @@ import config from "./config"
 
 const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
   const ctx = canvas.getContext("2d")!
-  const backgroundCanvas = document.createElement("canvas")
+  // const backgroundCanvas = document.createElement("canvas")
 
   const drawBackground = () => {
-    backgroundCanvas.width = canvas.width
-    backgroundCanvas.height = canvas.height
-    const backgroundCtx = backgroundCanvas.getContext("2d")!
+    // backgroundCanvas.width = canvas.width
+    // backgroundCanvas.height = canvas.height
+    // const backgroundCtx = backgroundCanvas.getContext("2d")!
 
-    backgroundCtx.fillStyle = config.colors.background
+    ctx.fillStyle = config.colors.background
     ctx.fillRect(
       0,
       0,
-      window.innerWidth / state.scale,
-      window.innerHeight / state.scale
+      canvas.width,
+      canvas.height
     )
   }
 
@@ -463,10 +463,10 @@ const useDraw = (canvas: HTMLCanvasElement, state: GameState) => {
   const draw = () => {
     ctx.save()
 
-    ctx.scale(1, 1)
+    // ctx.scale(1, 1)
 
     // Adapt to the current scale
-    ctx.scale(state.scale, state.scale)
+    // ctx.scale(state.scale, state.scale)
 
     drawBackground()
     drawMaze()

@@ -4,24 +4,26 @@ import config from "./config"
 type EventHandlers = {
   onClickReset: () => void
   onRestartAnimation: () => void
+  draw: () => void
 }
 
 const useEvents = (
   state: GameState,
   dispatch: (action: Action) => void,
-  { onClickReset, onRestartAnimation }: EventHandlers
+  { onClickReset, onRestartAnimation, draw }: EventHandlers
 ) => {
   const canvas = state.canvas
 
-  const onResize = () => {
+  const handleResize = () => {
+    // dispatch({ type: "updateScale" })
     dispatch({ type: "updateMazePosition" })
-    dispatch({ type: "updateScale" })
+    dispatch({ type: "resize" })
   }
-  const onStartPlaying = () => {
+  const handleStartPlaying = () => {
     dispatch({ type: "updateOverlayText", payload: "" })
     dispatch({ type: "updatePhase", payload: "playing" })
   }
-  const onTogglePause = () => {
+  const handleTogglePause = () => {
     dispatch({
       type: "updatePhase",
       payload: state.phase === "paused" ? "playing" : "paused",
@@ -39,34 +41,20 @@ const useEvents = (
     }
   }
 
-  const handleResize = () => {
-    // Resize the canvas
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
-
-    onResize()
-  }
-
   const handleKeyUp = (event: KeyboardEvent) => {
     // console.log("Key up", state.phase)
     if (
       state.phase === "intro" ||
-      state.phase === "game-over" ||
-      state.phase === "game-won"
+      state.phase === "gameOver" ||
+      state.phase === "gameWon"
     ) {
-      // if (state.phase === "game-over" || state.phase === "game-won") {
-      //   reset()
-      //   state.phase = "playing"
-      //   return
-      // }
-
-      onStartPlaying()
+      handleStartPlaying()
       return
     }
 
     // Toggle pause
     if (event.key === " ") {
-      onTogglePause()
+      handleTogglePause()
     }
 
     if (state.phase === "paused") return
@@ -129,16 +117,93 @@ const useEvents = (
     }
   }
 
+  let touchStart = { x: 0, y: 0 }
+  let touchEnd = { x: 0, y: 0 }
+
+  const handleTouchStart = (event: TouchEvent) => {
+    touchStart = { x: event.touches[0].clientX, y: event.touches[0].clientY }
+  }
+
+  const handleTouchEnd = (event: TouchEvent) => {
+    touchEnd = {
+      x: event.changedTouches[0].clientX,
+      y: event.changedTouches[0].clientY,
+    }
+
+    if (state.phase === "playing") {
+      const dx = touchEnd.x - touchStart.x
+      const dy = touchEnd.y - touchStart.y
+      const adx = Math.abs(dx)
+      const ady = Math.abs(dy)
+
+      if (adx > ady) {
+        // Moving horizontally
+        if (dx > 0) {
+          dispatch({
+            type: "updatePathmanMovement",
+            payload: { direction: "right", isMoving: true },
+          })
+        } else {
+          dispatch({
+            type: "updatePathmanMovement",
+            payload: { direction: "left", isMoving: true },
+          })
+        }
+      } else {
+        // Moving vertically
+        if (dy > 0) {
+          dispatch({
+            type: "updatePathmanMovement",
+            payload: { direction: "down", isMoving: true },
+          })
+        } else {
+          dispatch({
+            type: "updatePathmanMovement",
+            payload: { direction: "up", isMoving: true },
+          })
+        }
+      }
+    }
+
+    // Consider it a tap if the touch hasn't moved much
+    if (
+      state.phase === "intro" ||
+      state.phase === "gameOver" ||
+      state.phase === "gameWon" ||
+      state.phase === "paused"
+    ) {
+      if (
+        Math.abs(touchEnd.x - touchStart.x) < 30 &&
+        Math.abs(touchEnd.y - touchStart.y) < 30
+      ) {
+        // Start or reload the game
+        handleStartPlaying()
+      }
+    }
+  }
+
+  const handleChangeOrientation = () => {
+    handleResize()
+    dispatch({ type: "checkOrientation", payload: { isChange: true } })
+    draw()
+  }
+
   const attachEvents = () => {
     window.addEventListener("resize", handleResize)
     window.addEventListener("keyup", handleKeyUp)
     window.addEventListener("click", handleClick)
+    window.addEventListener("touchstart", handleTouchStart)
+    window.addEventListener("touchend", handleTouchEnd)
+    window.addEventListener('orientationchange', handleChangeOrientation);
   }
 
   const detachEvents = () => {
     window.removeEventListener("resize", handleResize)
     window.removeEventListener("keyup", handleKeyUp)
     window.removeEventListener("click", handleClick)
+    window.removeEventListener("touchstart", handleTouchStart)
+    window.removeEventListener("touchend", handleTouchEnd)
+    window.removeEventListener('orientationchange', handleChangeOrientation);
   }
 
   const triggerResize = () => {

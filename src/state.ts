@@ -39,7 +39,7 @@ const getInitialState = (canvas: HTMLCanvasElement): GameState => {
     pathman,
     ghosts,
     phase: "intro",
-    overlayText: "Welcome to Pathman! Press any key to Start.",
+    overlayText: config.overlayMessages.intro,
     scale: 1,
     previousAnimationTimestamp: undefined,
     debug: {
@@ -397,7 +397,7 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
             y: Math.floor(state.pathman.y / config.cellSize),
           }
         } else {
-          state.phase = "game-over"
+          state.phase = "gameOver"
           state.overlayText = config.overlayMessages.gameOver
         }
       }
@@ -531,6 +531,18 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
     }
   }
 
+  const updateStats = (deltaTime: number) => {
+    state.debug.currentFPS = 1000 / deltaTime
+    state.score.livesFlashOn = state.previousAnimationTimestamp! % 500 < 250
+    if (
+      state.score.score >= config.scoreToExtraLife &&
+      state.score.score % config.scoreToExtraLife === 0
+    ) {
+      state.pathman.extraLives++
+      state.score.score += 10
+    }
+  }
+
   const updateMazePosition = () => {
     const canvas = state.canvas
 
@@ -545,31 +557,52 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
     }
   }
 
-  const updateStats = (deltaTime: number) => {
-    state.debug.currentFPS = 1000 / deltaTime
-    state.score.livesFlashOn = state.previousAnimationTimestamp! % 500 < 250
-    if (
-      state.score.score >= config.scoreToExtraLife &&
-      state.score.score % config.scoreToExtraLife === 0
-    ) {
-      state.pathman.extraLives++
-      state.score.score += 10
+  const handleResize = () => {
+    // Resize the canvas
+    canvas.width = state.maze.bounds.width + config.cellSize * 4
+    canvas.height = state.maze.bounds.height + config.cellSize * 4
+  }
+
+  const handleCheckOrientation = ({ isChange }: { isChange?: boolean } = {}) => {
+    const isPortrait = window.screen.orientation.type.includes("portrait")
+    const currentPhase = state.phase
+
+    if (isPortrait) {
+      state.phase = "paused"
+      state.overlayText = config.overlayMessages.orientation
+    }
+
+    if (isChange && !isPortrait) {
+      state.phase = currentPhase
+      state.overlayText = config.overlayMessages[currentPhase]
     }
   }
 
   const calculateScale = () => {
     // TODO: calculate width based on the number of cells in the maze
     // const mazeWidth = 0 + config.sidebarWidth
-    const scale = window.innerWidth / window.innerWidth
-    state.scale = scale
+    // const mazeWidth = state.maze.bounds.width
+    // const gameWidth = mazeWidth + config.cellSize * 4 * state.scale
+    // const mazeHeight = state.maze.bounds.height
+    // const gameHeight = mazeHeight + config.cellSize * 4 * state.scale
+    // const scaleX = canvas.width / gameWidth
+    // const scaleY = canvas.height / gameHeight
+    // state.scale = Math.min(scaleX, scaleY, 1)
+    // console.log({
+    //   mazeWidth,
+    //   mazeHeight,
+    //   gameWidth,
+    //   gameHeight,
+    //   scaleX,
+    //   scaleY,
+    //   canvasWidth: canvas.width,
+    //   canvasHeight: canvas.height,
+    //   scale: state.scale,
+    // })
   }
 
   const dispatch = (action: Action) => {
     switch (action.type) {
-      case "init":
-        canvas.width = window.innerWidth
-        canvas.height = window.innerHeight
-        break
       case "updatePathman":
         updatePathman()
         break
@@ -590,7 +623,7 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
           state.phase = action.payload
         } else {
           if (state.pellets.length === 0 && state.powerPellets.length === 0) {
-            state.phase = "game-won"
+            state.phase = "gameWon"
             state.overlayText = config.overlayMessages.gameWon
           }
         }
@@ -612,11 +645,18 @@ const useState = (canvas: HTMLCanvasElement): UseStateReturnType => {
         state.previousAnimationTimestamp = action.payload
         break
       case "updateScale":
-        calculateScale()
+        // calculateScale()
+        break
+      case "resize":
+        handleResize()
         break
       case "reset":
         state = getInitialState(canvas)
         break
+      case "checkOrientation": {
+        handleCheckOrientation(action.payload)
+        break
+      }
       default:
         break
     }

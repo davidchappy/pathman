@@ -75,9 +75,9 @@ export type GameConfig = {
   screenPadding: number
   sidebarWidth: number
   overlayMessages: {
-    paused: string
-    gameOver: string
-    gameWon: string
+    [K in GamePhase]: string
+  } & {
+    orientation: string
   }
   maze: MazeBlueprint
   wallWidth: number
@@ -115,7 +115,7 @@ export type PathNode = Node & {
   parent?: PathNode
 }
 
-export type GamePhase = "playing" | "game-over" | "game-won" | "paused" | "intro"
+export type GamePhase = "playing" | "gameOver" | "gameWon" | "paused" | "intro"
 
 export type GameScore = {
   score: number
@@ -156,8 +156,9 @@ export type ActionType =
   | "setPreviousAnimationTimestamp"
   | "updateScale"
   | "reset"
-  | "init"
+  | "resize"
   | "updatePathmanMovement"
+  | "checkOrientation"
 
 export type Action = {
   type: ActionType
